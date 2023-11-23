@@ -1,26 +1,54 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import * as React from 'react';
+import { Routes, Route } from 'react-router-dom';
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+import 'mapbox-gl/dist/mapbox-gl.css';
+
+import Map from 'react-map-gl';
+import Home from './pages/Home';
+import About from './pages/About';
+import NavBar from './pages/NavBar';
+import Login from './pages/auth/Login';
+import TestNav from './pages/TestNav';
+import Page404 from './pages/Page404';
+import Dashboard from './pages/Dashboard';
+import Register from './pages/auth/Register';
+import ProtectedRouteLayout from './pages/auth/ProtectedRouteLayout';
+
+class App extends React.Component {
+  accessToken: string;
+  location: [number, number];
+
+  constructor(props: {} | Readonly<{}>) {
+    super(props)
+    this.accessToken = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN || ""
+    this.location = [0,0]
+  }
+
+  componentDidMount() {
+
+  }
+  
+  render() {
+    return (
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/home" element={<Home />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/test" element={<TestNav />} />
+
+
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="*" element={<Page404 />} />
+
+        <Route element={<ProtectedRouteLayout />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          
+        </Route>
+      </Routes>
+    );
+  }
+  
 }
 
 export default App;
