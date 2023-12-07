@@ -1,216 +1,282 @@
-import { FC, useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import Map, { Layer, MapRef, Source } from 'react-map-gl';
-import { MapLayerMouseEvent } from 'react-map-gl'
+import React, { Component, Ref, RefObject } from 'react';
+import { NavigateFunction, useNavigate } from 'react-router-dom';
+import Map, { Layer, MapRef } from 'react-map-gl';
+import { MapLayerMouseEvent } from 'react-map-gl';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { signOut, User } from 'firebase/auth';
+import { deleteDoc, doc, setDoc, } from 'firebase/firestore';
+import { auth, db, getCounties, getUserDoc, storage } from '../resources/firebase';
+import { styles } from '../resources/map-style';
+import { County, CountyFeature, CountyObject, CountyProperties } from '../resources/utils';
+import { bbox } from '@turf/turf';
+import { FillLayer, MapLayerTouchEvent, MapboxGeoJSONFeature } from 'mapbox-gl';
 
-import { useAuthState } from "react-firebase-hooks/auth";
-import { signOut } from 'firebase/auth';
-import { CollectionReference, collection, doc, getDoc, getDocs, query, setDoc, updateDoc } from 'firebase/firestore';
+// @ts-ignore
+import mapboxgl from 'mapbox-gl/dist/mapbox-gl-csp'
+// @ts-ignore
+// eslint-disable-next-line import/no-webpack-loader-syntax, import/no-unresolved
+import MapboxWorker from 'worker-loader!mapbox-gl/dist/mapbox-gl-csp-worker'
+mapboxgl.workerClass = MapboxWorker
 
-import { auth, db, getUserDoc } from "../resources/firebase"
-import { fillStyle, linesStyle } from '../resources/map-style';
-import { CountyFeatureCollection, County, updateData, BaseCounty, CountyObject } from '../resources/utils';
-import { FeatureCollection, bbox } from '@turf/turf';
-import { Feature, Geometry } from 'geojson';
-
-
-
-interface DashboardProps { }
-
-const Dashboard: FC<DashboardProps> = () => {
-
+const DashboardWrapper = () => {
   const navigate = useNavigate();
-  const accessToken = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN
-  // console.log("Access Token:", accessToken);
-  
-
   const [user, loading, error] = useAuthState(auth)
-  const [mouse, setMouse] = useState({ lat: 0, lng: 0 })
-  const [allCounties, setAllCounties] = useState<CountyFeatureCollection>()
-  const [currCounty, setCurrCounty] = useState<County | null>(null)
-
-  const mapRef = useRef<MapRef>() || null;
-  const [counties, setCounties] = useState<CountyObject>({})
-  const [viewState, setViewState] = useState({
-    longitude: -98.5696,
-    latitude: 39.8282,
-    zoom: 5
-  });
-
-  useEffect(() => {
-    if (user && !allCounties) {
-      fetch("https://raw.githubusercontent.com/kjhealy/us-county/master/data/geojson/gz_2010_us_050_00_500k.json")
-        .then(v => v.json())
-        .then((json: FeatureCollection<Geometry, BaseCounty>) => {
-          let features = json.features.map( f => {
-            return {
-              ...f,
-              properties: {
-                id: f.properties.STATE + f.properties.COUNTY,
-                visited: false,
-                // visited: Boolean(Math.round(Math.random())),
-                name: f.properties.NAME,
-                count: 0
-              }
-            }
-          })
-
-          setAllCounties({type: "FeatureCollection", features})
-        }).then(() => {
-          console.log('hi');
-        })
-        .catch(console.error)
-      }
-
-
-    if (user) {
-      const userDoc = getUserDoc(db, user.uid)
-      const counties = collection(db, "users", user.uid, "counties")
-      console.log("Getting counties...");
-      
-      // const q = query(counties)
-      getDocs(query(counties)).then(c => {
-        const docs = c.docs.map(d => d.data()) as County[]
-        const counties = docs.map(d => [d.id, d])
-                
-        setCounties(Object.fromEntries(counties))
-      })
-      getDoc(userDoc).then(doc => {
-        console.log(doc.data())
-      })
-    }
-
-
-  }, [])
-
-  useEffect(() => {
-    if (currCounty) setCounties({ ...counties, [currCounty.id]: currCounty })
-    // if (allCounties && currCounty) setAllCounties(updateData(allCounties, currCounty))
-
-  }, [currCounty])
-
-  useEffect(() => {
-    if (allCounties) setAllCounties(updateData(allCounties, Object.values(counties)))
-  
-  }, [counties])
-  
-
-
-  // useEffect(() => {
-  // if (allCounties) setAllCounties(updateData(allCounties, counties))
-  // }, [counties])
-
-
-  const onMove = useCallback((e: { viewState: { longitude: number; latitude: number; zoom: number; } }) => {
-    // const newCenter = [e.viewState.longitude, e.viewState.latitude];
-
-    setViewState(e.viewState)
-  }, [])
-
-  const logout = () => {
-    signOut(auth).then(() => {
-      navigate("/")
-    }).catch(console.error)
-  }
-
-  const mouseMove = useCallback((e: MapLayerMouseEvent) => {
-    setMouse(e.lngLat)
-  }, [mouse])
-
-
-  const onClick = async (e: MapLayerMouseEvent) => {
-    if (e.features?.length) {
-      const props = e.features[0].properties as County
-
-      let updatedCounty;
-      if (props.visited) {
-        updatedCounty = { ...props, count: props.count + 1 }
-        // setCurrCounty({...props, count: props.count+1, visits: [...props.visits, new Date()]})
-      } else {
-        updatedCounty = { ...props, visited: true, count: props.count + 1 }
-      }
-      setCurrCounty(updatedCounty)
-      if (user) {
-        const countyRef = doc(db, "users", user.uid, "counties", props.id)
-        if ((await getDoc(countyRef)).exists()) {
-          updateDoc(countyRef, updatedCounty)
-        } else {
-          setDoc(countyRef, updatedCounty)
-        }
-      }
-
-    }
-  }
-
-  //TODO: Long click??
-  const onDoubleClick = (e: MapLayerMouseEvent) => {
-    if (e.features?.length) {
-      const feature = e.features[0]
-      const [minLng, minLat, maxLng, maxLat] = bbox(feature);
-  
-        mapRef?.current?.fitBounds(
-          [
-            [minLng, minLat],
-            [maxLng, maxLat]
-          ],
-          {padding: 70, duration: 3000}
-        );
-    }
-   
-  }
-
 
   return (
-    <div className=''>
-      <div className='shadow-lg'>
-        This is a navbar
-        <button className=' border border-gray-500 rounded p-2' onClick={logout}>
-          Log Out
-        </button>
-      </div>
-
-      <div>
-        <h2>Center:</h2>
-        <p>Lat: {viewState.latitude.toFixed(3)}</p>
-        <p>Long: {viewState.longitude.toFixed(3)}</p>
-        <p>Zoom: {viewState.zoom.toFixed(3)}</p>
-      </div>
-      <div>
-        {/* <h2>Mouse:</h2>
-        <p>Lat: {mouse.lat.toFixed(3)}</p>
-        <p>Long: {mouse.lng.toFixed(3)}</p>
-        <p>Zoom: {viewState.zoom.toFixed(3)}</p> */}
-        <p>currCounty: {JSON.stringify(currCounty)},</p>
-      </div>
-      {/* <button className='p-4'>
-        <ArrowLeftIcon className='h-6 w-6 text-gray-900 hover:text-gray-700' onClick={() => navigate(-1)} />
-      </button> */}
-
-      <Map
-        mapboxAccessToken={accessToken}
-        //@ts-ignore
-        ref={mapRef}
-        {...viewState}
-
-        minZoom={3}
-        maxBounds={[[-170, 0], [-50, 75]]}
-        style={{ width: "100%", height: "70vh" }}
-        mapStyle="mapbox://styles/juddlee/clo0th5kf00an01p60t1a24s2"
-        onMove={onMove}
-        onMouseMove={mouseMove}
-        onDblClick={onDoubleClick}
-        onClick={onClick}
-        maxPitch={0}
-        interactiveLayerIds={['county_lines_fill']}
-      >
-        <Source id="counties" type="geojson" data={allCounties && allCounties}>
-          <Layer beforeId="waterway-label" {...linesStyle} />
-          <Layer beforeId="waterway-label" {...fillStyle} />
-        </Source>
-      </Map>
-
-    </div>
+    <Dashboard navigate={navigate} user={user} />
   )
 }
 
-export default Dashboard;
+interface DashboardProps {
+  navigate: NavigateFunction,
+  user: User | null | undefined
+
+}
+
+interface DashboardState {
+  currCounty: CountyProperties | null,
+  sort: 'visited'|'count',
+  mapRef: RefObject<MapRef>,
+  counties: CountyObject,
+  view: {
+    longitude: number,
+    latitude: number,
+    zoom: number,
+  },
+  highlightedStyle: FillLayer
+}
+
+class Dashboard extends Component<DashboardProps, DashboardState> {
+  private accessToken = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
+
+  private feat = (id: number) => ({ source: 'composite', sourceLayer: 'base-counties-ids', id });
+  private clickTimer: NodeJS.Timeout | null = null;
+  private longTimer: NodeJS.Timeout | null = null;
+
+  constructor(props: DashboardProps) {
+    super(props)
+
+    this.state = {
+      currCounty: null,
+      sort: 'visited',
+      mapRef: React.createRef(),
+      counties: {},
+      view: {
+        longitude: -98.5696,
+        latitude: 39.8282,
+        zoom: 4,
+      },
+      highlightedStyle: this.generateStyle()
+    }
+  }
+
+  componentDidMount() {
+    this.setState({sort: 'count'})
+
+    if (this.props.user) {
+      console.log('Getting counties...');
+
+      getCounties(db, this.props.user.uid).then(counties => {
+        this.setState({ counties })
+      })
+    }
+  }
+
+  componentDidUpdate(prevProps: DashboardProps, prevState: DashboardState) {
+    
+    if (prevState.sort !== this.state.sort) {
+      this.setState({highlightedStyle: this.generateStyle()})
+    }
+
+    if (this.state.counties !== prevState.counties) {      
+      Object.values(this.state.counties).forEach((c) => {
+        this.state.mapRef.current?.setFeatureState(this.feat(c.id), c);
+      });
+
+      const removed = Object.values(prevState.counties).reduce((acc: CountyObject, c) => {
+        if (!this.state.counties[c.id]) {
+          acc[c.id] = c
+        }
+        return acc
+      }, {})
+
+      Object.values(removed).forEach(c => {
+        this.state.mapRef.current?.setFeatureState(this.feat(c.id), {visited: false, count: null});
+      })
+
+      console.log('counties updated');//, this.state.counties, removed);
+    }
+  }
+
+  private onMove = (e: { viewState: { longitude: number; latitude: number; zoom: number } }) => {
+    if (this.longTimer) clearTimeout(this.longTimer)
+    this.longTimer = null
+    this.setState({ view: e.viewState });
+  };
+
+  private logout = () => {
+    signOut(auth)
+      .then(() => {
+        this.props.navigate('/');
+      })
+      .catch(console.error);
+  };
+
+  private addCounty(feature: MapboxGeoJSONFeature) {
+    const id = feature.id as number;
+    const countyIds = Object.values(this.state.counties).map(c => c.id);
+
+    let state: County;
+    if (countyIds.includes(id)) {
+      console.log('already visited!');
+
+      state = {
+        ...(feature.state as County),
+        count: feature.state.count + 1,
+      };
+    } else {
+      state = {
+        id,
+        visited: true,
+        name: feature.properties?.name,
+        count: 1,
+      };
+    }
+
+    this.setState((prev) => ({
+      counties: {
+        ...prev.counties,
+        [id]: state
+      }
+    }))
+
+    if (this.props.user) {
+      const docRef = doc(db, 'users', this.props.user.uid, 'counties', state.id.toString())
+      setDoc(docRef, state);
+      console.log("Set County", state);
+    }
+  }
+
+  private removeCounty = (feature: MapboxGeoJSONFeature) => {
+    const counties = Object.values(this.state.counties).reduce((acc: CountyObject, c) => {
+      if (c.id !== feature.id) {
+        acc[c.id] = c
+      }
+      return acc
+    }, {})
+
+    this.setState({counties})
+
+    if (this.props.user && feature.id) {
+      const docRef = doc(db, 'users', this.props.user.uid, 'counties', feature.id.toString())
+      deleteDoc(docRef).catch(console.log);
+    }
+  }
+
+  private onMouseDown = (e: MapLayerMouseEvent) => {
+    const features = e?.features
+
+    this.longTimer = setTimeout(() => {
+      console.log('long click');
+      if (features?.length && features[0].state.visited) {
+        //Long/Right Click
+        this.removeCounty(features[0])
+      }
+      this.longTimer = null
+    }, 400);
+  }
+
+  private onClick = (e: MapLayerMouseEvent) => {
+    const features = e?.features
+
+    if (this.longTimer && features?.length) {
+      const feature = features[0]
+      clearInterval(this.longTimer)
+      this.longTimer = null
+
+      if (e.originalEvent.detail === 1) {
+        this.clickTimer = setTimeout(() => {
+          console.log('single click');
+          //Single Click:
+          this.setState({currCounty: feature.properties as CountyProperties});
+          this.addCounty(feature)
+        }, 200)
+      } else if (this.clickTimer && e.originalEvent.detail === 2) {
+        console.log('double click');
+        clearTimeout(this.clickTimer);
+        this.clickTimer = null
+
+        //Double Click:
+        this.setState({currCounty: feature.properties as CountyProperties});
+
+        const [minLng, minLat, maxLng, maxLat] = bbox(feature);
+        this.state.mapRef?.current?.fitBounds(
+          [
+            [minLng, minLat],
+            [maxLng, maxLat],
+          ],
+          { padding: 100, duration: 3000 }
+        );
+      }
+    }
+  }
+
+  generateStyle() {
+    const sort = this.state?.sort || "visited"
+    
+    const style = {
+      id: 'county-fill',
+      source: 'composite',
+      'source-layer': 'base-counties-ids',
+      type: 'fill',
+      paint: {
+        'fill-color': styles[sort],
+        'fill-opacity': ['interpolate', ['linear'], ['zoom'], 9, 1, 15, 0],
+      },
+    } as FillLayer;
+
+    return style
+  }
+
+  render() {
+    return (
+      <div className="">
+        <div className="shadow-lg bg-white z-30">
+          This is a navbar
+          <button className="border border-gray-500 rounded p-2" onClick={this.logout}>
+            Log Out
+          </button>
+        </div>
+
+        <div className="bg-white w-fit">
+          <h2>Center:</h2>
+          <p>Lat: {this.state.view.latitude.toFixed(3)}</p>
+          <p>Long: {this.state.view.longitude.toFixed(3)}</p>
+          <p>Zoom: {this.state.view.zoom.toFixed(3)}</p>
+          <p>currCounty: {JSON.stringify(this.state.currCounty)},</p>
+        </div>
+
+        <Map
+          mapboxAccessToken={this.accessToken}
+          ref={this.state.mapRef}
+          {...this.state.view}
+          minZoom={2.5}
+          maxPitch={0}
+          doubleClickZoom={false}
+          style={{ left: 0, top: 0, zIndex: -1, position: 'absolute', width: '100%', height: '100%' }}
+          mapStyle="mapbox://styles/juddlee/clo0th5kf00an01p60t1a24s2"
+          onMove={this.onMove}
+          onClick={this.onClick}
+          onMouseDown={this.onMouseDown}
+          // onClick={this.onSingleClick}
+          // onDblClick={this.onDoubleClick}
+          interactiveLayerIds={['county-fill']}
+        >
+          <Layer beforeId="county-line" {...this.state.highlightedStyle} />
+        </Map>
+      </div>
+    );
+  }
+}
+
+export default DashboardWrapper

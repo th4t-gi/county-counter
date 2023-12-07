@@ -1,8 +1,9 @@
 // Import the functions you need from the SDKs you need
-import { FirebaseApp, getApp, initializeApp } from "firebase/app";
+import { initializeApp } from "firebase/app";
 import { createUserWithEmailAndPassword, getAuth, signInWithEmailAndPassword, signOut } from 'firebase/auth'
-import { DocumentData, DocumentSnapshot, Firestore, FirestoreDataConverter, Timestamp, addDoc, collection, doc, getDoc, getFirestore, setDoc } from "firebase/firestore"
-import { County } from "./utils";
+import {  Firestore, collection, doc, getDocs, getFirestore, query, setDoc } from "firebase/firestore"
+import { getStorage } from 'firebase/storage'
+import { County, CountyObject } from "./utils";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -21,31 +22,28 @@ const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app)
 export const db = getFirestore(app);
+export const storage = getStorage(app);
 
 export const getUserDoc = (db: Firestore, uid: string) => {
   return doc(db, "users", uid)
 }
 
-// const countiesConverter = {
-//   // toFirestore: (county: County) => {
-//   //   const {count, visits, image, trips} = county
-//   //   return {
-//   //     count,
-//   //     visits,
-//   //     image,
-//   //     name: county.NAME,
-//   //     state: county.STATE,
-//   //     trips
-//   //   };
-//   // },
-//   fromFirestore: (snapshot: DocumentSnapshot, options: any) => {
-//     const data = snapshot.data(options);
-//     return {}
-//   }
+// export const setCounty = (db: Firestore, uid: string, data: County) => {
+//   const docRef = doc(db, 'users', uid, 'counties', data.id.toString())
+//   setDoc(docRef, data);
 // }
 
-export const saveCounties = (db: Firestore, data: any) => {
-  // getUserDoc().withConverter(countiesConverter)
+export const getCounties = async (db: Firestore, uid: string) => {
+  const countiesRef = collection(db, 'users', uid, 'counties');
+
+  const snapshot = await getDocs(query(countiesRef))
+  const counties = snapshot.docs.reduce((acc: CountyObject, d) => {
+    const doc = d.data() as County
+    acc[doc.id] = doc
+    return acc
+  }, {})
+  
+  return counties
 }
 
 export const initializeUserFirestore = (db: Firestore, user: { username: string, uid: string, email: string, hometown: string }) => {

@@ -1,13 +1,33 @@
-import { readFileSync } from "fs";
-import { writeFile } from "fs/promises";
+// import { readFileSync, writeFileSync } from "fs";
+// import { writeFile } from "fs/promises";
 
-const str = readFileSync("./gz_2010_us_050_00_500k.json").toString();
+fetch("https://raw.githubusercontent.com/kjhealy/us-county/master/data/geojson/gz_2010_us_050_00_500k.json")
+  .then(v => v.json())
+  .then((json) => {
+    let features = json.features.map( f => {
+      return {
+        ...f,
+        id: parseInt(f.properties.STATE + f.properties.COUNTY),
+        properties: {
+          lsad: f.properties.LSAD,
+          state: f.properties.STATE,
+          name: f.properties.NAME,
+          county: f.properties.COUNTY,
+          census_area: f.properties.CENSUSAREA,
+          geo_id: f.properties.GEO_ID
+        }
+      }
+    })
 
-let json = JSON.parse(str);
+    const collection = {type: "FeatureCollection", features}
+    require("fs").writeFileSync("./base_counties_ids.json", JSON.stringify(collection))
+  })
 
-json.features.map((v) => {
-  const random = Boolean(Math.round(Math.random()));
-  v.properties.CLICKED = random;
-});
+// let json = JSON.parse(str);
 
-writeFile("./test.json");
+// json.features.map((v) => {
+//   const random = Boolean(Math.round(Math.random()));
+//   v.properties.CLICKED = random;
+// });
+
+// writeFile("./test.json");

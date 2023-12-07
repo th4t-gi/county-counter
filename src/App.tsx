@@ -10,7 +10,7 @@ import NavBar from './pages/NavBar';
 import Login from './pages/auth/Login';
 import TestNav from './pages/TestNav';
 import Page404 from './pages/Page404';
-import Dashboard from './pages/Dashboard';
+import DashboardWrapper from './pages/Dashboard';
 import Register from './pages/auth/Register';
 import ProtectedRouteLayout from './pages/auth/ProtectedRouteLayout';
 
@@ -42,7 +42,7 @@ class App extends React.Component {
         <Route path="*" element={<Page404 />} />
 
         <Route element={<ProtectedRouteLayout />}>
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard" element={<DashboardWrapper />} />
           
         </Route>
       </Routes>

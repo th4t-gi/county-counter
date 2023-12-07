@@ -1,46 +1,29 @@
-import { FeatureCollection } from 'geojson';
-import type { LineLayer, FillLayer } from 'react-map-gl';
+import { Expression } from 'mapbox-gl';
 
-export const geojson: FeatureCollection = {
-  type: 'FeatureCollection',
-  features: [
-    { type: 'Feature', geometry: { type: 'Point', coordinates: [-122.4, 37.8] }, properties: {} }
-  ]
-};
-
-export const filterStyle: FillLayer = {
-  id: "county_lines_filter",
-  source: 'counties',
-  type: "fill",
-  paint: {
-    'fill-color': "#3288bd"
-  }
-}
-
-export const fillStyle: FillLayer = {
-  id: "county_lines_fill",
-  source: 'counties',
-  type: "fill",
-  paint: {
-    "fill-color": [
-      'case',
-      ['==', ['get', 'visited'], true], '#3288bd',
-      "#888888",
+export const styles: {[key: string]: Expression} = {
+  visited: [
+    "case",
+    ["==", ["feature-state", "visited"], true],
+    "#a9c0ea",
+    "rgba(171, 195, 231, 0)"
+  ],
+  count: [
+    "case",
+    ["==", ['feature-state', "count"], null],
+    "rgba(171, 195, 231, 0)",
+    [
+      "interpolate",
+      ["linear"],
+      ["feature-state", "count"],
+      0, '#3288bd',
+      1, '#66c2a5',
+      2, '#abdda4',
+      3, '#e6f598',
+      4, '#ffffbf',
+      5, '#fee08b',
+      6, '#fdae61',
+      7, '#f46d43',
+      8, '#d53e4f'
     ],
-    "fill-opacity": [
-      'case',
-      ['==', ['get', 'visited'], true], .8,
-      0.2,
-    ],
-  },
-}
-
-export const linesStyle: LineLayer = {
-  id: "county_lines_outline",
-  type: 'line',
-  paint: {
-    'line-width': .5,
-    // 'line-color': '#9ca09f'
-    'line-color': '#888888'
-  },
+  ],
 }
