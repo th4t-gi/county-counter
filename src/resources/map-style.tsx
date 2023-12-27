@@ -15,7 +15,6 @@ export const styles: {[key: string]: Expression} = {
       "interpolate",
       ["linear"],
       ["feature-state", "count"],
-      0, '#3288bd',
       1, '#66c2a5',
       2, '#abdda4',
       3, '#e6f598',

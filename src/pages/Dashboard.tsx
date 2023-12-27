@@ -1,15 +1,18 @@
-import React, { Component, Ref, RefObject } from 'react';
+import React, { Component, RefObject } from 'react';
 import { NavigateFunction, useNavigate } from 'react-router-dom';
 import Map, { Layer, MapRef } from 'react-map-gl';
 import { MapLayerMouseEvent } from 'react-map-gl';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { signOut, User } from 'firebase/auth';
-import { deleteDoc, doc, setDoc, } from 'firebase/firestore';
-import { auth, db, getCounties, getUserDoc, storage } from '../resources/firebase';
+import { collection, deleteDoc, doc, setDoc, } from 'firebase/firestore';
+import { auth, db, getCounties, storage } from '../resources/firebase';
 import { styles } from '../resources/map-style';
-import { County, CountyFeature, CountyObject, CountyProperties } from '../resources/utils';
+import { County, CountyFeature, CountyObject, getCountyState, countiesAreEqual, removeCounty } from '../resources/utils';
 import { bbox } from '@turf/turf';
-import { FillLayer, MapLayerTouchEvent, MapboxGeoJSONFeature } from 'mapbox-gl';
+import { FillLayer, MapboxGeoJSONFeature } from 'mapbox-gl';
+
+// import { XMarkIcon } from '@heroicons/react/24/solid';
+import SidePanel from './components/SidePanel';
 
 // @ts-ignore
 import mapboxgl from 'mapbox-gl/dist/mapbox-gl-csp'
@@ -22,20 +25,19 @@ const DashboardWrapper = () => {
   const navigate = useNavigate();
   const [user, loading, error] = useAuthState(auth)
 
-  return (
-    <Dashboard navigate={navigate} user={user} />
-  )
+  return (<>
+    {user && <Dashboard navigate={navigate} user={user} />}
+  </>)
 }
 
 interface DashboardProps {
   navigate: NavigateFunction,
-  user: User | null | undefined
-
+  user: User
 }
 
 interface DashboardState {
-  currCounty: CountyProperties | null,
-  sort: 'visited'|'count',
+  current: CountyFeature | null,
+  sort: 'visited' | 'count',
   mapRef: RefObject<MapRef>,
   counties: CountyObject,
   view: {
@@ -53,12 +55,14 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
   private clickTimer: NodeJS.Timeout | null = null;
   private longTimer: NodeJS.Timeout | null = null;
 
+  private sortOptions = ['visited', 'count']
+
   constructor(props: DashboardProps) {
     super(props)
 
     this.state = {
-      currCounty: null,
-      sort: 'visited',
+      current: null,
+      sort: 'count',
       mapRef: React.createRef(),
       counties: {},
       view: {
@@ -66,52 +70,96 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
         latitude: 39.8282,
         zoom: 4,
       },
-      highlightedStyle: this.generateStyle()
+      highlightedStyle: this.generateStyle('count')
     }
   }
 
   componentDidMount() {
-    this.setState({sort: 'count'})
+    document.addEventListener('keydown', this.handleEscape);
 
-    if (this.props.user) {
-      console.log('Getting counties...');
+    // this.setState({ sort: 'count' })
 
-      getCounties(db, this.props.user.uid).then(counties => {
+    console.log('Getting counties...');
+
+    getCounties(db, this.props.user.uid).then(counties => {
+      this.setState({ counties })
+    })
+  }
+
+  componentDidUpdate(prevProps: DashboardProps, prevState: DashboardState) {
+
+    if (prevState.sort !== this.state.sort) {
+      this.setState({ highlightedStyle: this.generateStyle(this.state.sort) })
+    }
+
+
+    if (this.state.current && prevState.current !== this.state.current) {
+      const curr = this.state.current.state as County
+
+      if (curr.visited) {
+        this.setState({ counties: { ...this.state.counties, [curr.id]: this.state.current.state } })
+      } else {
+        const counties = removeCounty(this.state.current, this.state.counties)
         this.setState({ counties })
+      }
+    }
+
+
+    if (this.state.counties !== prevState.counties) {
+
+      //ADDED && EDITED
+      Object.values(this.state.counties).forEach((c) => {
+        if (!countiesAreEqual(prevState.counties[c.id], c)) {
+
+          this.state.mapRef.current?.setFeatureState(this.feat(c.id), c);
+
+          if (this.state.current?.id == c.id) {
+            this.setState({ current: { ...this.state.current, state: c } });
+          }
+
+          //BUG: when counties collection doesn't exist, first county isn't set till a 2nd county is clicked
+          if (Object.keys(prevState.counties).length) {
+            const docRef = doc(db, 'users', this.props.user.uid, 'counties', c.id.toString())
+            console.log('setting', c);
+            setDoc(docRef, c);
+          }
+
+        }
+      })
+
+      //REMOVED
+      Object.values(prevState.counties).forEach((c) => {
+        if (!this.state.counties[c.id]) {
+
+          this.state.mapRef.current?.removeFeatureState(this.feat(c.id))
+
+          if (this.state.current?.id == c.id) {
+            this.setState({ current: { ...this.state.current, state: {} } });
+          }
+
+          const docRef = doc(db, 'users', this.props.user.uid, 'counties', c.id.toString())
+          console.log('deleting', c);
+          deleteDoc(docRef).catch(console.log);
+        }
       })
     }
   }
 
-  componentDidUpdate(prevProps: DashboardProps, prevState: DashboardState) {
-    
-    if (prevState.sort !== this.state.sort) {
-      this.setState({highlightedStyle: this.generateStyle()})
-    }
-
-    if (this.state.counties !== prevState.counties) {      
-      Object.values(this.state.counties).forEach((c) => {
-        this.state.mapRef.current?.setFeatureState(this.feat(c.id), c);
-      });
-
-      const removed = Object.values(prevState.counties).reduce((acc: CountyObject, c) => {
-        if (!this.state.counties[c.id]) {
-          acc[c.id] = c
-        }
-        return acc
-      }, {})
-
-      Object.values(removed).forEach(c => {
-        this.state.mapRef.current?.setFeatureState(this.feat(c.id), {visited: false, count: null});
-      })
-
-      console.log('counties updated');//, this.state.counties, removed);
-    }
+  componentWillUnmount(): void {
+    document.removeEventListener('keydown', this.handleEscape);
   }
 
   private onMove = (e: { viewState: { longitude: number; latitude: number; zoom: number } }) => {
     if (this.longTimer) clearTimeout(this.longTimer)
     this.longTimer = null
     this.setState({ view: e.viewState });
+  };
+
+  handleEscape = (event: KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      console.log('Escape key pressed');
+      this.setState({ current: null })
+    }
   };
 
   private logout = () => {
@@ -122,92 +170,16 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
       .catch(console.error);
   };
 
-  private addCounty(feature: MapboxGeoJSONFeature) {
-    const id = feature.id as number;
-    const countyIds = Object.values(this.state.counties).map(c => c.id);
-
-    let state: County;
-    if (countyIds.includes(id)) {
-      console.log('already visited!');
-
-      state = {
-        ...(feature.state as County),
-        count: feature.state.count + 1,
-      };
-    } else {
-      state = {
-        id,
-        visited: true,
-        name: feature.properties?.name,
-        count: 1,
-      };
-    }
-
-    this.setState((prev) => ({
-      counties: {
-        ...prev.counties,
-        [id]: state
-      }
-    }))
-
-    if (this.props.user) {
-      const docRef = doc(db, 'users', this.props.user.uid, 'counties', state.id.toString())
-      setDoc(docRef, state);
-      console.log("Set County", state);
-    }
-  }
-
-  private removeCounty = (feature: MapboxGeoJSONFeature) => {
-    const counties = Object.values(this.state.counties).reduce((acc: CountyObject, c) => {
-      if (c.id !== feature.id) {
-        acc[c.id] = c
-      }
-      return acc
-    }, {})
-
-    this.setState({counties})
-
-    if (this.props.user && feature.id) {
-      const docRef = doc(db, 'users', this.props.user.uid, 'counties', feature.id.toString())
-      deleteDoc(docRef).catch(console.log);
-    }
-  }
-
   private onMouseDown = (e: MapLayerMouseEvent) => {
     const features = e?.features
 
     this.longTimer = setTimeout(() => {
       console.log('long click');
-      if (features?.length && features[0].state.visited) {
-        //Long/Right Click
-        this.removeCounty(features[0])
-      }
-      this.longTimer = null
-    }, 400);
-  }
+      //Long/Right Click
 
-  private onClick = (e: MapLayerMouseEvent) => {
-    const features = e?.features
-
-    if (this.longTimer && features?.length) {
-      const feature = features[0]
-      clearInterval(this.longTimer)
-      this.longTimer = null
-
-      if (e.originalEvent.detail === 1) {
-        this.clickTimer = setTimeout(() => {
-          console.log('single click');
-          //Single Click:
-          this.setState({currCounty: feature.properties as CountyProperties});
-          this.addCounty(feature)
-        }, 200)
-      } else if (this.clickTimer && e.originalEvent.detail === 2) {
-        console.log('double click');
-        clearTimeout(this.clickTimer);
-        this.clickTimer = null
-
-        //Double Click:
-        this.setState({currCounty: feature.properties as CountyProperties});
+      if (features?.length) {
+        const feature = features[0] as CountyFeature
+        this.setState({ current: feature });
 
         const [minLng, minLat, maxLng, maxLat] = bbox(feature);
         this.state.mapRef?.current?.fitBounds(
@@ -218,12 +190,54 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
           { padding: 100, duration: 3000 }
         );
       }
+
+      this.longTimer = null
+    }, 400);
+  }
+
+  //BUG: When you single click a county, then right click it deletes the county
+  private onClick = (e: MapLayerMouseEvent) => {
+    const features = e?.features
+
+    if (this.longTimer && features?.length) {
+      const feature = features[0] as CountyFeature
+
+      clearInterval(this.longTimer)
+      this.longTimer = null
+
+      if (e.originalEvent.detail === 1) {
+        this.clickTimer = setTimeout(() => {
+          console.log('single click');
+          //Single Click:
+
+          this.setState({ counties: {...this.state.counties, [feature.id]: getCountyState(feature)}})
+
+          // const [minLng, minLat, maxLng, maxLat] = bbox(feature);
+          // this.state.mapRef?.current?.fitBounds(
+          //   [
+          //     [minLng, minLat],
+          //     [maxLng, maxLat],
+          //   ],
+          //   { padding: 100, duration: 3000 }
+          // );
+        }, 200)
+      } else if (this.clickTimer && e.originalEvent.detail === 2) {
+        console.log('double click', feature.state);
+        clearTimeout(this.clickTimer);
+        this.clickTimer = null
+
+        //Double Click:
+        if (features?.length && features[0].state.visited) {
+          const counties = removeCounty(features[0], this.state.counties)
+          this.setState({ counties })
+          // this.removeCounty(features[0])
+        }
+      }
     }
   }
 
-  generateStyle() {
-    const sort = this.state?.sort || "visited"
-    
+  generateStyle(sort: 'visited' | 'count') {
+
     const style = {
       id: 'county-fill',
       source: 'composite',
@@ -238,23 +252,40 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
     return style
   }
 
+  setCurrent = (current: CountyFeature | null) => {
+    this.setState({ current })
+  }
+
   render() {
     return (
-      <div className="">
-        <div className="shadow-lg bg-white z-30">
-          This is a navbar
+      <>
+        <div className="shadow-lg bg-white z-30 flex flex-auto justify-between items-center p-2">
+
+          <div>
+            <label>Sort by:</label>
+            <select value={this.state.sort} onChange={(e) => this.setState({ sort: e.target.value as 'visited' | 'count' })}>
+              {this.sortOptions.map((option, index) => (
+                <option key={index} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <button className="border border-gray-500 rounded p-2" onClick={this.logout}>
             Log Out
           </button>
         </div>
 
-        <div className="bg-white w-fit">
+        <div className="bg-white w-fit max-w-sm overflow-scroll absolute">
           <h2>Center:</h2>
           <p>Lat: {this.state.view.latitude.toFixed(3)}</p>
           <p>Long: {this.state.view.longitude.toFixed(3)}</p>
           <p>Zoom: {this.state.view.zoom.toFixed(3)}</p>
-          <p>currCounty: {JSON.stringify(this.state.currCounty)},</p>
         </div>
+
+        {this.state.current &&
+          <SidePanel county={this.state.current} setCurrent={this.setCurrent} />}
 
         <Map
           mapboxAccessToken={this.accessToken}
@@ -263,7 +294,7 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
           minZoom={2.5}
           maxPitch={0}
           doubleClickZoom={false}
-          style={{ left: 0, top: 0, zIndex: -1, position: 'absolute', width: '100%', height: '100%' }}
+          style={{ top: 0, left: 0, zIndex: -1, position: 'absolute', width: '100vw', height: '100vh' }}
           mapStyle="mapbox://styles/juddlee/clo0th5kf00an01p60t1a24s2"
           onMove={this.onMove}
           onClick={this.onClick}
@@ -274,7 +305,9 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
         >
           <Layer beforeId="county-line" {...this.state.highlightedStyle} />
         </Map>
-      </div>
+
+
+      </>
     );
   }
 }

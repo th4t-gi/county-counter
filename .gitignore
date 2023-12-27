@@ -13,6 +13,7 @@
 
 # misc
 .DS_Store
+.env
 .env.local
 .env.development.local
 .env.test.local
@@ -36,3 +37,5 @@ hosting/dist/index.html
 /functions/dist/
 /functions/src/config/**
 /functions/.runtimeconfig.json
+
+/misc-json

@@ -1,7 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { createUserWithEmailAndPassword, getAuth, signInWithEmailAndPassword, signOut } from 'firebase/auth'
-import {  Firestore, collection, doc, getDocs, getFirestore, query, setDoc } from "firebase/firestore"
+import {  Firestore, collection, doc, getDocs, initializeFirestore, persistentLocalCache, query, setDoc } from "firebase/firestore"
 import { getStorage } from 'firebase/storage'
 import { County, CountyObject } from "./utils";
 // TODO: Add SDKs for Firebase products that you want to use
@@ -18,10 +18,10 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig, );
 
 export const auth = getAuth(app)
-export const db = getFirestore(app);
+export const db = initializeFirestore(app, {localCache: persistentLocalCache({})});
 export const storage = getStorage(app);
 
 export const getUserDoc = (db: Firestore, uid: string) => {
