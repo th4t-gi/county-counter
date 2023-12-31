@@ -6,8 +6,8 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { signOut, User } from 'firebase/auth';
 import { collection, deleteDoc, doc, setDoc, } from 'firebase/firestore';
 import { auth, db, getCounties, storage } from '../resources/firebase';
-import { styles } from '../resources/map-style';
-import { County, CountyFeature, CountyObject, getCountyState, countiesAreEqual, removeCounty } from '../resources/utils';
+import { generateStyle, styles } from '../resources/map-style';
+import { County, CountyFeature, CountyObject, getCountyState, countiesAreEqual, removeCounty, isEmpty } from '../resources/utils';
 import { bbox } from '@turf/turf';
 import { FillLayer, MapboxGeoJSONFeature } from 'mapbox-gl';
 
@@ -15,11 +15,11 @@ import { FillLayer, MapboxGeoJSONFeature } from 'mapbox-gl';
 import SidePanel from './components/SidePanel';
 
 // @ts-ignore
-import mapboxgl from 'mapbox-gl/dist/mapbox-gl-csp'
+import mapboxgl from "mapbox-gl";
 // @ts-ignore
-// eslint-disable-next-line import/no-webpack-loader-syntax, import/no-unresolved
-import MapboxWorker from 'worker-loader!mapbox-gl/dist/mapbox-gl-csp-worker'
-mapboxgl.workerClass = MapboxWorker
+// eslint-disable-next-line import/no-webpack-loader-syntax
+mapboxgl.workerClass =
+  require("worker-loader!mapbox-gl/dist/mapbox-gl-csp-worker").default; /* eslint import/no-webpack-loader-syntax: off */
 
 const DashboardWrapper = () => {
   const navigate = useNavigate();
@@ -38,6 +38,7 @@ interface DashboardProps {
 interface DashboardState {
   current: CountyFeature | null,
   sort: 'visited' | 'count',
+  countyNames: boolean,
   mapRef: RefObject<MapRef>,
   counties: CountyObject,
   view: {
@@ -55,7 +56,7 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
   private clickTimer: NodeJS.Timeout | null = null;
   private longTimer: NodeJS.Timeout | null = null;
 
-  private sortOptions = ['visited', 'count']
+  private sortOptions = ['visited', 'count', 'year', 'trips', "state"]
 
   constructor(props: DashboardProps) {
     super(props)
@@ -63,6 +64,7 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
     this.state = {
       current: null,
       sort: 'count',
+      countyNames: true,
       mapRef: React.createRef(),
       counties: {},
       view: {
@@ -70,11 +72,12 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
         latitude: 39.8282,
         zoom: 4,
       },
-      highlightedStyle: this.generateStyle('count')
+      highlightedStyle: generateStyle('count')
     }
   }
 
   componentDidMount() {
+
     document.addEventListener('keydown', this.handleEscape);
 
     // this.setState({ sort: 'count' })
@@ -89,7 +92,7 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
   componentDidUpdate(prevProps: DashboardProps, prevState: DashboardState) {
 
     if (prevState.sort !== this.state.sort) {
-      this.setState({ highlightedStyle: this.generateStyle(this.state.sort) })
+      this.setState({ highlightedStyle: generateStyle(this.state.sort) })
     }
 
 
@@ -120,7 +123,7 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
           //BUG: when counties collection doesn't exist, first county isn't set till a 2nd county is clicked
           if (Object.keys(prevState.counties).length) {
             const docRef = doc(db, 'users', this.props.user.uid, 'counties', c.id.toString())
-            console.log('setting', c);
+            console.log('setting', c.id);
             setDoc(docRef, c);
           }
 
@@ -138,7 +141,7 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
           }
 
           const docRef = doc(db, 'users', this.props.user.uid, 'counties', c.id.toString())
-          console.log('deleting', c);
+          console.log('deleting', c.id);
           deleteDoc(docRef).catch(console.log);
         }
       })
@@ -174,7 +177,7 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
     const features = e?.features
 
     this.longTimer = setTimeout(() => {
-      console.log('long click');
+      console.log('long click', e);
       //Long/Right Click
 
       if (features?.length) {
@@ -202,15 +205,36 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
     if (this.longTimer && features?.length) {
       const feature = features[0] as CountyFeature
 
+      if (isEmpty(feature.state)) {
+        this.state.mapRef.current?.setFeatureState(
+          this.feat(feature.id),
+          {
+            id: feature.id,
+            visited: false,
+            name: feature.properties?.name,
+            state: feature.properties?.state,
+            count: 0,
+            lived: false
+          }
+        )
+      }
+      
       clearInterval(this.longTimer)
       this.longTimer = null
 
       if (e.originalEvent.detail === 1) {
         this.clickTimer = setTimeout(() => {
-          console.log('single click');
+          console.log('single click', this.state.mapRef.current?.getFeatureState(this.feat(feature.id)));
+          
           //Single Click:
+          let state = this.state.mapRef.current?.getFeatureState(this.feat(feature.id)) as County
 
-          this.setState({ counties: {...this.state.counties, [feature.id]: getCountyState(feature)}})
+          state.visited = true
+          if (this.state.sort == 'count') state.count++
+          else if (state.count == 0) state.count = 1
+          
+
+          this.setState({ counties: {...this.state.counties, [state.id]: state}})
 
           // const [minLng, minLat, maxLng, maxLat] = bbox(feature);
           // this.state.mapRef?.current?.fitBounds(
@@ -235,22 +259,7 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
       }
     }
   }
-
-  generateStyle(sort: 'visited' | 'count') {
-
-    const style = {
-      id: 'county-fill',
-      source: 'composite',
-      'source-layer': 'base-counties-ids',
-      type: 'fill',
-      paint: {
-        'fill-color': styles[sort],
-        'fill-opacity': ['interpolate', ['linear'], ['zoom'], 9, 1, 15, 0],
-      },
-    } as FillLayer;
-
-    return style
-  }
+  
 
   setCurrent = (current: CountyFeature | null) => {
     this.setState({ current })
@@ -261,6 +270,7 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
       <>
         <div className="shadow-lg bg-white z-30 flex flex-auto justify-between items-center p-2">
 
+        <div className='flex flex-auto items-center gap-3'>
           <div>
             <label>Sort by:</label>
             <select value={this.state.sort} onChange={(e) => this.setState({ sort: e.target.value as 'visited' | 'count' })}>
@@ -271,6 +281,13 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
               ))}
             </select>
           </div>
+
+          <button className="border border-gray-500 rounded p-2" onClick={() => {this.setState({countyNames: !this.state.countyNames})}}>
+            {this.state.countyNames ? "Hide Names" : "Show Names"}
+          </button>
+        </div>
+          
+
 
           <button className="border border-gray-500 rounded p-2" onClick={this.logout}>
             Log Out
@@ -299,11 +316,10 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
           onMove={this.onMove}
           onClick={this.onClick}
           onMouseDown={this.onMouseDown}
-          // onClick={this.onSingleClick}
-          // onDblClick={this.onDoubleClick}
           interactiveLayerIds={['county-fill']}
         >
-          <Layer beforeId="county-line" {...this.state.highlightedStyle} />
+          <Layer beforeId="aeroway-polygon" {...this.state.highlightedStyle} />
+          <Layer type="symbol" id='county-labels' layout={{visibility: (this.state.countyNames ? "visible" : "none")}}/>
         </Map>
 
 

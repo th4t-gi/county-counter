@@ -27,6 +27,9 @@ yarn-error.log*
 .firebase/
 firebase-debug.log
 .firebaserc
+firebase.json
+firestore.indexes.json
+firestore.rules
 
 # hosting
 /hosting/.env*

@@ -41,6 +41,10 @@ export const countiesAreEqual = (a: County, b: County) => {
     a.id === b.id
 }
 
+export const isEmpty = (obj: object) => {
+  return Object.keys(obj).length == 0
+}
+
 export function getCountyState(feature: CountyFeature) {
   const id = feature.id as number;
 

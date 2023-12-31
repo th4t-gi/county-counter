@@ -30,7 +30,9 @@ const SidePanel: FC<SidePanelProps> = (props) => {
   }, [county])
 
   useEffect(() => {
-    setCurrentState({count, visited, lived})
+    if (!Number.isNaN(count)) {
+      setCurrentState({count, visited, lived})
+    }
   }, [count, visited, lived])
 
 

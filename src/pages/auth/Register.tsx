@@ -5,7 +5,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import { auth, db, initializeUserFirestore, signUpWithEmailAndPassword } from '../../resources/firebase';
 
 
-
+//TODO: ADD VERIFICATION TO THE FIELDS
+/*
+- password length and strength
+- look up hometown/database of hometowns
+- verify email format and send verification email
+- 
+*/
 interface RegisterProps {}
 
 const Register: FC<RegisterProps> = () => {
