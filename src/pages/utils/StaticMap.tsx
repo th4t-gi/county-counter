@@ -1,50 +1,82 @@
-import React, { FC, useContext } from 'react';
+import React, { FC, useContext, useEffect, useState } from 'react';
 
 
 interface StaticMapProps {
-  coord: {
+  coords: {
     lat: number,
     long: number,
     zoom: number
-  } | false
+  }
+  className: string
 }
 
 
 
-const StaticMap: FC<StaticMapProps> = ({coord = false}) => {
+const StaticMap: FC<StaticMapProps> = (props) => {
   const accessToken = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN
-  let lat, long, zoom;
+  let [imgSrc, setImgSrc] = useState("");
 
-  // const { test } = useContext(GlobalContext)
-  if (!coord) {
-    navigator.geolocation.getCurrentPosition((pos) => {
-      lat = pos.coords.latitude
-      long = pos.coords.longitude
-      
-    })
-  } else {
-    lat = coord.lat
-    long = coord.long
-    zoom = coord.zoom
+  let defaultCoords = {
+    lat: 0,
+    long: 0,
+    zoom: 6
   }
-  
-  const imgSrc = `https://api.mapbox.com/styles/v1/juddlee/clo0th5kf00an01p60t1a24s2/static/${long},${lat},${zoom},0/1000x500@2x?access_token=${accessToken}`
 
-  // let position = new Promise<GeolocationPosition>((resolve, reject) => {
-  //   navigator.geolocation.getCurrentPosition(resolve, reject)
+  const getCurrentPosition = () => {
+    return new Promise<GeolocationPosition> ((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(resolve, reject)
+    })
+  }
+
+  const getImgUrl = ({lat, long, zoom}: {lat: number, long: number, zoom: number}) => {
+    return './1000x500@2x.png'
+    // return `https://api.mapbox.com/styles/v1/juddlee/clo0th5kf00an01p60t1a24s2/static/${long},${lat},${zoom},0/1000x500?access_token=${accessToken}`
+  }
+
+  // navigator.geolocation.getCurrentPosition(pos => {
+  //   console.log('hi');
+
+  //   let defaultCoords = {
+  //     lat: pos.coords.latitude,
+  //     long: pos.coords.longitude,
+  //     zoom: 6
+  //   }
+
+  //   let url = getImgUrl(props.coords || defaultCoords)
+  //   console.log(url);
+    
+  //   // setImgSrc(url)
   // })
 
-  // position.then((pos) => {
-  //   console.log(pos.coords.latitude, pos.coords.longitude)
-  // })
+  useEffect(() => {
+    let url = getImgUrl(props.coords)
+    
+    setImgSrc(url)
+    
+    // getCurrentPosition().then(pos => {
+    //   console.log('hi');
+
+    //   let defaultCoords = {
+    //     lat: pos.coords.latitude,
+    //     long: pos.coords.longitude,
+    //     zoom: 6
+    //   }
+
+    //   let url = getImgUrl(props.coords || defaultCoords)
+    //   console.log(url);
+      
+    //   setImgSrc(url)
+    // }).catch(console.error)
+      // const { test } = useContext(GlobalContext)
+
+    
+  }, [])
 
 
   
 
   return (
-    <div>
-      <img src={imgSrc} alt="" className=' opacity-40'/>
-    </div>
+    <img className={props.className} src={imgSrc} alt={`County Counter map`}/>
   )
 }
 

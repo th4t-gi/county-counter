@@ -1,9 +1,12 @@
 import { ArrowLeftIcon } from '@heroicons/react/24/solid';
 import { FC, useEffect, useState } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { auth, logInWithEmailAndPassword } from '../../resources/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
+
+import {Box, Button, Checkbox, FormControl, FormHelperText, FormLabel, Input, Stack, Typography, Link, IconButton, Card} from '@mui/joy';
+import StaticMap from '../utils/StaticMap';
 
 
 interface LoginProps {}
@@ -40,85 +43,66 @@ const Login: FC<LoginProps> = () => {
   }
 
   return (
-    <>
-      <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12">
-        <button className='p-4 left-0 top-0'>
-          <ArrowLeftIcon className='h-6 w-6 text-gray-900 hover:text-gray-700' onClick={() => navigate(-1)}/>
-        </button>
+    <Box px={4} py={6}>
+      <IconButton onClick={() => navigate(-1)}>
+        <ArrowLeftIcon />
+      </IconButton>
 
-        <div className="sm:mx-auto sm:w-full sm:max-w-sm">
+      <StaticMap coords={{lat: 39, long: -108, zoom: 5}} className='absolute left-0 top-0 -z-10 h-screen w-screen object-cover opacity-40'/>
+      
+      <Card sx={{mx: {sm: 'auto'}, maxWidth: {sm: 'sm'}, mt: {sm: 10}, h: 'fit-content' }}>
+        {/* <IconButton onClick={() => navigate(-1)}>
+          <ArrowLeftIcon />
+        </IconButton> */}
+
+        <Stack p={3} spacing={2} alignItems={'stretch'} useFlexGap>
           <img
             className="mx-auto h-10 w-auto"
-            src="https://tailwindui.com/img/logos/mark.svg?color=green&shade=600"
+            src="/logo175.png"
             alt="County Counter"
           />
-          <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
+
+          <Typography level='h2' textAlign={'center'} mb={3}>
             Sign in to your account
-          </h2>
-        </div>
+          </Typography>
+          <FormControl>
+            <FormLabel >Email Address</FormLabel>
+            <Input 
+              onChange={e => setEmail(e.target.value)} 
+              value={email}
+              type='email'
+              placeholder="someone@example.com" />
+          </FormControl>
 
-        <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-          <div className="space-y-6">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">
-                Email address
-              </label>
-              <div className="mt-2">
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-400 sm:text-sm sm:leading-6"
-                />
-              </div>
-            </div>
+          <FormControl>
+            <FormLabel>Password</FormLabel>
+            <Input
+              type='password'
+              value={password}
+              onChange={e => setPassword(e.target.value)}/>
+          </FormControl>
+          <Box
+            display="flex"
+            justifyContent={'space-between'}
+            alignItems={'center'}
+          >
+            <Checkbox size="sm" label="Remember me" name="persistent" />
+            <Link level="title-sm" href="#replace-with-a-link">
+              Forgot your password?
+            </Link>
+          </Box>
 
-            <div>
-              <div className="flex items-center justify-between">
-                <label htmlFor="password" className="block text-sm font-medium leading-6 text-gray-900">
-                  Password
-                </label>
-                <div className="text-sm">
-                  <a href="#" className="font-semibold text-indigo-600 hover:text-indigo-500">
-                    Forgot password?
-                  </a>
-                </div>
-              </div>
-              <div className="mt-2">
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
-              </div>
-            </div>
+          <Button onClick={submit}>Sign in</Button>
 
-            <div>
-              <button
-                onClick={() => submit()}
-                className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-              >
-                Sign in
-              </button>
-            </div>
-          </div>
-
-          <p className="mt-10 text-center text-sm text-gray-500">
-            Don't have one?{' '}
-            <Link to="/register" className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500">
+          <Typography level="title-sm" textAlign={'center'}>
+            Don't have one? {" "}
+            <Link href="/register" >
               Create an account
             </Link>
-          </p>
-        </div>
-      </div>
-    </>
+          </Typography>
+        </Stack>
+      </Card>
+    </Box>
   )
 }
 
