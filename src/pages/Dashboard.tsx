@@ -16,6 +16,7 @@ import SidePanel from './components/SidePanel';
 
 // @ts-ignore
 import mapboxgl from "mapbox-gl";
+import { Button, Select, Stack, Option } from '@mui/joy';
 // @ts-ignore
 // eslint-disable-next-line import/no-webpack-loader-syntax
 mapboxgl.workerClass =
@@ -271,7 +272,13 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
         <div className="shadow-lg bg-white z-30 flex flex-auto justify-between items-center p-2">
 
         <div className='flex flex-auto items-center gap-3'>
-          <div>
+
+        <Select defaultValue={this.state.sort} placeholder="Sort by" onChange={(e, newValue) => this.setState({ sort: newValue as 'visited' | 'count' })}>
+          {this.sortOptions.map((option, index) => (
+            <Option value={option}>{option}</Option>
+          ))}
+        </Select>
+          {/* <div>
             <label>Sort by:</label>
             <select value={this.state.sort} onChange={(e) => this.setState({ sort: e.target.value as 'visited' | 'count' })}>
               {this.sortOptions.map((option, index) => (
@@ -280,18 +287,37 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
                 </option>
               ))}
             </select>
-          </div>
+          </div> */}
 
-          <button className="border border-gray-500 rounded p-2" onClick={() => {this.setState({countyNames: !this.state.countyNames})}}>
+          <Button variant='soft' onClick={() => {this.setState({countyNames: !this.state.countyNames})}}>
             {this.state.countyNames ? "Hide Names" : "Show Names"}
-          </button>
+          </Button>
+
+          {/* <button className="border border-gray-500 rounded p-2" onClick={() => {this.setState({countyNames: !this.state.countyNames})}}>
+            {this.state.countyNames ? "Hide Names" : "Show Names"}
+          </button> */}
         </div>
           
 
-
-          <button className="border border-gray-500 rounded p-2" onClick={this.logout}>
+          
+          <Stack direction={'row'} spacing={1}>
+            <Button variant='soft' onClick={this.logout}>
+              Log Out
+            </Button>
+            <Button variant='outlined' onClick={this.logout}>
+              Log Out
+            </Button>
+            <Button variant='solid' onClick={this.logout}>
+              Log Out
+            </Button>
+            <Button variant='plain' onClick={this.logout}>
+              Log Out
+            </Button>
+          </Stack>
+          
+          {/* <button className="border border-gray-500 rounded p-2" onClick={this.logout}>
             Log Out
-          </button>
+          </button> */}
         </div>
 
         <div className="bg-white w-fit max-w-sm overflow-scroll absolute">
