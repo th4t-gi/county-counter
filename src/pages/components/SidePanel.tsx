@@ -1,4 +1,3 @@
-import { XMarkIcon } from '@heroicons/react/24/solid'
 import { MapboxGeoJSONFeature } from 'mapbox-gl'
 import React, { ChangeEvent, FC, useEffect, useState } from 'react'
 import { County, CountyFeature, getCountyState } from '../../resources/utils'

@@ -1,4 +1,4 @@
-import { ArrowLeftIcon } from '@heroicons/react/24/solid';
+import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import React, { FC, useState } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { Link, useNavigate } from 'react-router-dom';
@@ -42,7 +42,7 @@ const Register: FC<RegisterProps> = () => {
     <>
       <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12">
         <button className='p-4 left-0 top-0'>
-          <ArrowLeftIcon className='h-6 w-6 text-gray-900 hover:text-gray-700' onClick={() => navigate(-1)}/>
+          <ArrowBackRoundedIcon className='h-6 w-6 text-gray-900 hover:text-gray-700' onClick={() => navigate(-1)}/>
         </button>
 
         <div className="sm:mx-auto sm:w-full sm:max-w-sm">
