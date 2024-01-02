@@ -9,12 +9,7 @@ import { auth, db, getCounties, storage } from '../resources/firebase';
 import { generateStyle, styles } from '../resources/map-style';
 import { County, CountyFeature, CountyObject, getCountyState, countiesAreEqual, removeCounty, isEmpty, SortOptions } from '../resources/utils';
 import { bbox } from '@turf/turf';
-import { FillLayer, MapboxGeoJSONFeature } from 'mapbox-gl';
-import { Button, Select, Stack, Option, Box, IconButton, Drawer, Divider, List, ListItem, ListItemButton, Avatar, Dropdown, Menu, MenuItem, MenuButton, ModalClose, DialogTitle, ListItemDecorator, Typography } from '@mui/joy';
-import { Bars3Icon, Cog6ToothIcon } from '@heroicons/react/24/solid';
-import { Settings, CloseRounded } from '@mui/icons-material'
-
-// import { XMarkIcon } from '@heroicons/react/24/solid';
+import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import SidePanel from './components/SidePanel';
 
 // @ts-ignore
@@ -322,7 +317,7 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
         <Box bgcolor='white' className="shadow-lg">
           <Stack p={1} direction='row' spacing={1}>
             <IconButton size="sm" onClick={this.toggleDrawer(true)}>
-              <Bars3Icon></Bars3Icon>
+              <MenuRoundedIcon></MenuRoundedIcon>
             </IconButton>
             <Select defaultValue={this.state.sort} placeholder="Sort by" onChange={(e, newValue) => this.setState({ sort: newValue as 'visited' | 'count' })}>
               {this.sortOptions.map((option, index) => (

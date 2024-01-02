@@ -41,7 +41,8 @@ export const countiesAreEqual = (a: County, b: County) => {
     a.id === b.id
 }
 
-export const isEmpty = (obj: object) => {
+export const isEmpty = (obj: any) => {
+  if (!obj) return false
   return Object.keys(obj).length == 0
 }
 

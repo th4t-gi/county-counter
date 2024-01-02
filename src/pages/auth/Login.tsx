@@ -1,11 +1,23 @@
-import { ArrowLeftIcon } from '@heroicons/react/24/solid';
+import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import { FC, useEffect, useState } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useNavigate } from 'react-router-dom';
 import { auth, logInWithEmailAndPassword } from '../../resources/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 
-import {Box, Button, Checkbox, FormControl, FormHelperText, FormLabel, Input, Stack, Typography, Link, IconButton, Card} from '@mui/joy';
+import Box from '@mui/joy/Box'
+import Button from '@mui/joy/Button'
+import Checkbox from '@mui/joy/Checkbox'
+import FormControl from '@mui/joy/FormControl'
+import FormHelperText from '@mui/joy/FormHelperText'
+import FormLabel from '@mui/joy/FormLabel'
+import Input from '@mui/joy/Input'
+import Stack from '@mui/joy/Stack'
+import Typography from '@mui/joy/Typography'
+import Link from '@mui/joy/Link'
+import IconButton from '@mui/joy/IconButton'
+import Card from '@mui/joy/Card'
+// import { Checkbox, FormControl, FormHelperText, FormLabel, Input, Stack, Typography, Link, IconButton, Card} from '@mui/joy';
 import StaticMap from '../utils/StaticMap';
 
 
@@ -45,7 +57,7 @@ const Login: FC<LoginProps> = () => {
   return (
     <Box px={4} py={6}>
       <IconButton onClick={() => navigate(-1)}>
-        <ArrowLeftIcon />
+        <ArrowBackRoundedIcon />
       </IconButton>
 
       <StaticMap coords={{lat: 39, long: -108, zoom: 5}} className='absolute left-0 top-0 -z-10 h-screen w-screen object-cover opacity-40'/>
