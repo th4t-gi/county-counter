@@ -5,12 +5,18 @@ import { MapLayerMouseEvent } from 'react-map-gl';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { signOut, User } from 'firebase/auth';
 import { collection, deleteDoc, doc, setDoc, } from 'firebase/firestore';
-import { auth, db, getCounties, storage } from '../resources/firebase';
-import { generateStyle, styles } from '../resources/map-style';
-import { County, CountyFeature, CountyObject, getCountyState, countiesAreEqual, removeCounty, isEmpty, SortOptions } from '../resources/utils';
 import { bbox } from '@turf/turf';
+import { FillLayer, MapboxEvent } from 'mapbox-gl';
+
+import { Button, Select, Stack, Option, Box, IconButton, Drawer, Divider, List, ListItem, ListItemButton, Avatar, Dropdown, Menu, MenuItem, MenuButton, ModalClose, DialogTitle, Typography, Input, FormControl, FormLabel, Switch} from '@mui/joy';
+import CloseRounded from '@mui/icons-material/CloseRounded'
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
+import AddIcon from '@mui/icons-material/Add';
+
 import SidePanel from './components/SidePanel';
+import { County, CountyFeature, CountyObject, getCountyState, countiesAreEqual, removeCounty, isEmpty, SortOptions } from '../resources/utils';
+import { auth, db, getCounties } from '../resources/firebase';
+import { generateStyle } from '../resources/map-style';
 
 // @ts-ignore
 import mapboxgl from "mapbox-gl";
@@ -268,16 +274,16 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
   }
 
   toggleDrawer = (drawerOpen: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => {
-      if (
-        event.type === 'keydown' &&
-        ((event as React.KeyboardEvent).key === 'Tab' ||
-          (event as React.KeyboardEvent).key === 'Shift')
-      ) {
-        return;
-      }
+    if (
+      event.type === 'keydown' &&
+      ((event as React.KeyboardEvent).key === 'Tab' ||
+        (event as React.KeyboardEvent).key === 'Shift')
+    ) {
+      return;
+    }
 
-      this.setState({drawerOpen})
-    };
+    this.setState({drawerOpen})
+  };
 
   render() {
     return (
