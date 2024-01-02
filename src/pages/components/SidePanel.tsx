@@ -70,37 +70,33 @@ const SidePanel: FC<SidePanelProps> = (props) => {
   }
 
   return (
-    <div className='absolute right-0 bg-white h-5/6 w-1/3 overflow-auto overflow-y-scroll'>
-      <XMarkIcon className="h-10 w-10" onClick={() => { props.setCurrent(null) }} />
+    // <div className='absolute right-0 bg-white h-5/6 w-1/3 overflow-auto overflow-y-scroll'></div>
+    <div className='p-2' >
+      {/* <XMarkIcon className="h-10 w-10" onClick={() => { props.setCurrent(null) }} /> */}
+        {/* <h1 className=' text-2xl'>{county.properties.name} {county.properties.lsad}</h1> */}
 
       <div>
-        <h1 className=' text-2xl'>{county.properties.name} {county.properties.lsad}</h1>
-
-        <div>
-          <label className=' mx-2'>
-            Count:
-            <input type="number" className=' mx-2' min={0} value={count} onChange={(e) => updateCounty({count: parseInt(e.target.value)})} />
-          </label>
-        </div>
-
-        <div>
-          <label>
-            <input className=' mx-2' type="checkbox" checked={visited} onChange={(e) => updateCounty({visited: e.target.checked})}/>
-            Visited
-          </label>
-        </div>
-
-        <div>
-          <label>
-            <input className=' mx-2' type="checkbox" checked={lived} onChange={(e) => updateCounty({lived: e.target.checked})}/>
-            Lived
-          </label>
-        </div>
-
-        <p>county: {JSON.stringify(county.state)}</p>
+        <label className=' mx-2'>
+          Count:
+          <input type="number" className=' mx-2' min={0} value={count} onChange={(e) => updateCounty({count: parseInt(e.target.value)})} />
+        </label>
       </div>
 
+      <div>
+        <label>
+          <input className=' mx-2' type="checkbox" checked={visited} onChange={(e) => updateCounty({visited: e.target.checked})}/>
+          Visited
+        </label>
+      </div>
 
+      <div>
+        <label>
+          <input className=' mx-2' type="checkbox" checked={lived} onChange={(e) => updateCounty({lived: e.target.checked})}/>
+          Lived
+        </label>
+      </div>
+
+      <p>county: {JSON.stringify(county.state)}</p>
     </div>
   )
 }

@@ -7,16 +7,18 @@ import { signOut, User } from 'firebase/auth';
 import { collection, deleteDoc, doc, setDoc, } from 'firebase/firestore';
 import { auth, db, getCounties, storage } from '../resources/firebase';
 import { generateStyle, styles } from '../resources/map-style';
-import { County, CountyFeature, CountyObject, getCountyState, countiesAreEqual, removeCounty, isEmpty } from '../resources/utils';
+import { County, CountyFeature, CountyObject, getCountyState, countiesAreEqual, removeCounty, isEmpty, SortOptions } from '../resources/utils';
 import { bbox } from '@turf/turf';
 import { FillLayer, MapboxGeoJSONFeature } from 'mapbox-gl';
+import { Button, Select, Stack, Option, Box, IconButton, Drawer, Divider, List, ListItem, ListItemButton, Avatar, Dropdown, Menu, MenuItem, MenuButton, ModalClose, DialogTitle, ListItemDecorator, Typography } from '@mui/joy';
+import { Bars3Icon, Cog6ToothIcon } from '@heroicons/react/24/solid';
+import { Settings, CloseRounded } from '@mui/icons-material'
 
 // import { XMarkIcon } from '@heroicons/react/24/solid';
 import SidePanel from './components/SidePanel';
 
 // @ts-ignore
 import mapboxgl from "mapbox-gl";
-import { Button, Select, Stack, Option } from '@mui/joy';
 // @ts-ignore
 // eslint-disable-next-line import/no-webpack-loader-syntax
 mapboxgl.workerClass =
@@ -38,7 +40,7 @@ interface DashboardProps {
 
 interface DashboardState {
   current: CountyFeature | null,
-  sort: 'visited' | 'count',
+  sort: SortOptions
   countyNames: boolean,
   mapRef: RefObject<MapRef>,
   counties: CountyObject,
@@ -47,7 +49,10 @@ interface DashboardState {
     latitude: number,
     zoom: number,
   },
-  highlightedStyle: FillLayer
+  highlightedStyle: FillLayer,
+  drawerOpen: boolean
+  countyCount: number | null,
+  stateCount: number | null
 }
 
 class Dashboard extends Component<DashboardProps, DashboardState> {
@@ -57,7 +62,7 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
   private clickTimer: NodeJS.Timeout | null = null;
   private longTimer: NodeJS.Timeout | null = null;
 
-  private sortOptions = ['visited', 'count', 'year', 'trips', "state"]
+  private sortOptions = ['visited', 'count']
 
   constructor(props: DashboardProps) {
     super(props)
@@ -73,13 +78,15 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
         latitude: 39.8282,
         zoom: 4,
       },
-      highlightedStyle: generateStyle('count')
+      highlightedStyle: generateStyle('count'),
+      drawerOpen: false,
+      countyCount: null,
+      stateCount: null
     }
   }
 
   componentDidMount() {
-
-    document.addEventListener('keydown', this.handleEscape);
+    
 
     // this.setState({ sort: 'count' })
 
@@ -115,7 +122,9 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
       Object.values(this.state.counties).forEach((c) => {
         if (!countiesAreEqual(prevState.counties[c.id], c)) {
 
-          this.state.mapRef.current?.setFeatureState(this.feat(c.id), c);
+          if (this.state.mapRef.current?.loaded) {
+            this.state.mapRef.current?.setFeatureState(this.feat(c.id), c);
+          }
 
           if (this.state.current?.id == c.id) {
             this.setState({ current: { ...this.state.current, state: c } });
@@ -146,11 +155,14 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
           deleteDoc(docRef).catch(console.log);
         }
       })
-    }
-  }
 
-  componentWillUnmount(): void {
-    document.removeEventListener('keydown', this.handleEscape);
+      const countyCount = Object.keys(this.state.counties).length
+      this.setState({countyCount})
+
+      const states = Object.values(this.state.counties).map(c => c.state)
+        .filter((v, i, arr) => arr.indexOf(v) === i)
+      this.setState({stateCount: states.length})
+    }
   }
 
   private onMove = (e: { viewState: { longitude: number; latitude: number; zoom: number } }) => {
@@ -159,12 +171,6 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
     this.setState({ view: e.viewState });
   };
 
-  handleEscape = (event: KeyboardEvent) => {
-    if (event.key === 'Escape') {
-      console.log('Escape key pressed');
-      this.setState({ current: null })
-    }
-  };
 
   private logout = () => {
     signOut(auth)
@@ -266,69 +272,145 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
     this.setState({ current })
   }
 
+  toggleDrawer = (drawerOpen: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => {
+      if (
+        event.type === 'keydown' &&
+        ((event as React.KeyboardEvent).key === 'Tab' ||
+          (event as React.KeyboardEvent).key === 'Shift')
+      ) {
+        return;
+      }
+
+      this.setState({drawerOpen})
+    };
+
   render() {
     return (
-      <>
-        <div className="shadow-lg bg-white z-30 flex flex-auto justify-between items-center p-2">
+      <Box>
 
-        <div className='flex flex-auto items-center gap-3'>
-
-        <Select defaultValue={this.state.sort} placeholder="Sort by" onChange={(e, newValue) => this.setState({ sort: newValue as 'visited' | 'count' })}>
-          {this.sortOptions.map((option, index) => (
-            <Option value={option}>{option}</Option>
-          ))}
-        </Select>
-          {/* <div>
-            <label>Sort by:</label>
-            <select value={this.state.sort} onChange={(e) => this.setState({ sort: e.target.value as 'visited' | 'count' })}>
-              {this.sortOptions.map((option, index) => (
-                <option key={index} value={option}>
-                  {option}
-                </option>
+        {/* LEFT DRAWER */}
+        <Drawer size='sm' open={this.state.drawerOpen} onClose={this.toggleDrawer(false)} hideBackdrop={true}>
+          <Box
+            role="presentation"
+            onClick={this.toggleDrawer(false)}
+            // onKeyDown={this.toggleDrawer(false)}
+            p={1}
+          >
+            <ModalClose size='lg'/>
+            <DialogTitle >
+              <Avatar onClick={() => this.props.navigate('/')} size='lg' variant='plain' src="/logo700.png" sx={{borderRadius: 0}}/>
+            </DialogTitle>
+            <List>
+              {['Inbox', 'Starred', 'Send email', 'Drafts'].map((text) => (
+                <ListItem key={text}>
+                  <ListItemButton>{text}</ListItemButton>
+                </ListItem>
               ))}
-            </select>
-          </div> */}
+            </List>
+            <Divider />
+            <List>
+              {['All mail', 'Trash', 'Spam'].map((text) => (
+                <ListItem key={text}>
+                  <ListItemButton>{text}</ListItemButton>
+                </ListItem>
+              ))}
+            </List>
+          </Box>
+        </Drawer>
 
-          <Button variant='soft' onClick={() => {this.setState({countyNames: !this.state.countyNames})}}>
-            {this.state.countyNames ? "Hide Names" : "Show Names"}
-          </Button>
+        {/* TOP MENU */}
+        <Box bgcolor='white' className="shadow-lg">
+          <Stack p={1} direction='row' spacing={1}>
+            <IconButton size="sm" onClick={this.toggleDrawer(true)}>
+              <Bars3Icon></Bars3Icon>
+            </IconButton>
+            <Select defaultValue={this.state.sort} placeholder="Sort by" onChange={(e, newValue) => this.setState({ sort: newValue as 'visited' | 'count' })}>
+              {this.sortOptions.map((option, index) => (
+                <Option sx={{mx: 1, borderRadius: 5}} key={index} value={option}>{option}</Option>
+              ))}
+            </Select>
 
-          {/* <button className="border border-gray-500 rounded p-2" onClick={() => {this.setState({countyNames: !this.state.countyNames})}}>
-            {this.state.countyNames ? "Hide Names" : "Show Names"}
-          </button> */}
-        </div>
-          
+            <Button variant='soft' onClick={() => {this.setState({countyNames: !this.state.countyNames})}}>
+              {this.state.countyNames ? "Hide Names" : "Show Names"}
+            </Button>
 
-          
-          <Stack direction={'row'} spacing={1}>
-            <Button variant='soft' onClick={this.logout}>
-              Log Out
-            </Button>
-            <Button variant='outlined' onClick={this.logout}>
-              Log Out
-            </Button>
-            <Button variant='solid' onClick={this.logout}>
-              Log Out
-            </Button>
-            <Button variant='plain' onClick={this.logout}>
-              Log Out
-            </Button>
+            {/* Spacer */}
+            <Box flexGrow={1}></Box>
+
+            <Dropdown>
+              <MenuButton slots={{ root: Avatar }} sx={{
+                '& .MuiAvatar-root:hover': {
+                  opacity: 0.6,
+                }
+              }}>
+                <Avatar />
+              </MenuButton>
+              <Menu placement='bottom-start' sx={{p: 1}}>
+                <MenuItem >
+                  Profile
+                </MenuItem>
+                <MenuItem>
+                  My Stats
+                </MenuItem>
+                <MenuItem>
+                  Settings
+                </MenuItem>
+                <Divider></Divider>
+                <MenuItem onClick={this.logout}>
+                  Log Out
+                </MenuItem>
+              </Menu>
+            </Dropdown>
+
           </Stack>
-          
-          {/* <button className="border border-gray-500 rounded p-2" onClick={this.logout}>
-            Log Out
-          </button> */}
-        </div>
+        </Box>
 
-        <div className="bg-white w-fit max-w-sm overflow-scroll absolute">
-          <h2>Center:</h2>
-          <p>Lat: {this.state.view.latitude.toFixed(3)}</p>
-          <p>Long: {this.state.view.longitude.toFixed(3)}</p>
-          <p>Zoom: {this.state.view.zoom.toFixed(3)}</p>
-        </div>
+        <Box p={1} m={1} borderRadius={5} bgcolor={'white'} width={180}  position={'absolute'}>
+          <Typography level='body-lg'>Center:</Typography>
+          <Typography level='body-sm'>Lat: {this.state.view.latitude.toFixed(3)}</Typography>
+          <Typography level='body-sm'>Long: {this.state.view.longitude.toFixed(3)}</Typography>
+          <Typography level='body-sm'>Zoom: {this.state.view.zoom.toFixed(3)}</Typography>
 
-        {this.state.current &&
-          <SidePanel county={this.state.current} setCurrent={this.setCurrent} />}
+          {/* <Typography level='body-lg'>Stats:</Typography>
+           */}
+          <Divider sx={{my: 1}}></Divider>
+          <Typography level='body-sm'>Number of Counties: {this.state.countyCount}</Typography>
+          <Typography level='body-sm'>Number of States: {this.state.stateCount}</Typography>
+        </Box>
+
+        <Drawer 
+          open={this.state.current ? true : false}
+          anchor='right'
+          hideBackdrop={true}
+          onClose={() => this.setState({current: null})}
+          slotProps={{
+            root: {
+              sx: {
+                position: "relative"
+              }
+            },
+            content: {
+              sx: {
+                m: 6,
+                mt: `calc(56px + ${6*8}px)`,
+                borderRadius: 5,
+                height: `calc(100% - ${6*16 + 56}px)`
+              },
+            }
+          }}
+        >
+          <IconButton
+            onClick={() => this.setState({current: null})}
+            sx={{ position: 'absolute', top: 12, left: 12 }}
+          >
+            <CloseRounded />
+          </IconButton>
+          <DialogTitle sx={{justifyContent: 'center'}}level='h3'>
+            
+            {this.state.current?.properties.name} {this.state.current?.properties.lsad}
+          </DialogTitle>
+          {this.state.current && <SidePanel county={this.state.current} setCurrent={this.setCurrent} />}
+        </Drawer>
 
         <Map
           mapboxAccessToken={this.accessToken}
@@ -342,6 +424,8 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
           onMove={this.onMove}
           onClick={this.onClick}
           onMouseDown={this.onMouseDown}
+          onTouchStart={() => {console.log('test')}}
+          // onLoad={(e) => {console.log(e)}}
           interactiveLayerIds={['county-fill']}
         >
           <Layer beforeId="aeroway-polygon" {...this.state.highlightedStyle} />
@@ -349,7 +433,7 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
         </Map>
 
 
-      </>
+      </Box>
     );
   }
 }

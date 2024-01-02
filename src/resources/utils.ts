@@ -81,6 +81,8 @@ export const removeCounty = (feature: MapboxGeoJSONFeature, counties: CountyObje
 
 }
 
+export type SortOptions = 'visited' | 'count' | 'year' | 'trips' | 'state'
+
 export interface CountyProperties {
   census_area: number
   county: string

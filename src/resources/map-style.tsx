@@ -1,6 +1,7 @@
 import { Expression, FillLayer } from 'mapbox-gl';
+import { SortOptions } from './utils';
 
-export function generateStyle(sort: 'visited' | 'count') {
+export function generateStyle(sort: SortOptions) {
 
   const style = {
     id: 'county-fill',
