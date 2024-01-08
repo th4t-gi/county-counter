@@ -9,7 +9,7 @@ import { FillLayer } from 'mapbox-gl';
 import { Button, Select, Stack, Option, Box, IconButton, Drawer, Divider, List, ListItem, ListItemButton, Avatar, Dropdown, Menu, MenuItem, MenuButton, ModalClose, DialogTitle, Typography, Snackbar, } from '@mui/joy';
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 
-import { County, CountyFeature, CountyObject, SortOptions, Visit } from '../resources/utils';
+import { County, CountyFeature, CountyObject, SortOptions, Visit, sortOptions } from '../resources/utils';
 import { auth, db, getCounties } from '../resources/firebase';
 import { getStyle } from '../resources/map-style';
 
@@ -61,8 +61,6 @@ interface DashboardState {
 
 class Dashboard extends Component<DashboardProps, DashboardState> {
   private accessToken = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
-
-  private sortOptions = ['visited', 'count', 'year']
 
   constructor(props: DashboardProps) {
     super(props)
@@ -170,7 +168,7 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
 
     const newVisit: Visit = {
       trip: null,
-      nature: 'Visited',
+      nature: 'visited',
       timestamp: new Date()
     }
 
@@ -303,9 +301,9 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
             <IconButton size="sm" onClick={this.toggleDrawer(true)}>
               <MenuRoundedIcon></MenuRoundedIcon>
             </IconButton>
-            <Select defaultValue={this.state.sort} placeholder="Sort by" onChange={(e, newValue) => this.setState({ sort: newValue as SortOptions })}>
-              {this.sortOptions.map((option, index) => (
-                <Option sx={{ mx: 1, borderRadius: 5 }} key={index} value={option}>{option}</Option>
+            <Select defaultValue={this.state.sort} placeholder="Sort by" onChange={(e, newValue) => { if(newValue) this.setState({ sort: newValue })}}>
+              {Object.keys(sortOptions).map((option, index) => (
+                <Option sx={{ mx: 1, borderRadius: 5 }} key={index} value={option}>{sortOptions[option as SortOptions]}</Option>
               ))}
             </Select>
 

@@ -1,11 +1,10 @@
 import React, { CSSProperties, FC, ReactElement, RefObject, useEffect, useRef } from 'react'
 import Map, { FillLayer, Layer, MapLayerMouseEvent, MapLayerTouchEvent, MapRef, MapboxEvent, ViewState, ViewStateChangeEvent } from 'react-map-gl';
 
-import { County, CountyFeature, CountyFeatureState, CountyObject, getFeatureIdentifier } from '../../resources/utils'
+import { County, CountyFeature, CountyFeatureState, CountyObject, getFeatureIdentifier, natureOptions } from '../../resources/utils'
 
 import useDoubleLongClick from '../utils/useDoubleLongClick';
 import { bbox } from '@turf/turf';
-import { natureOptions } from './DetailPanel';
 
 interface InteractiveMapProps {
   counties: CountyObject
@@ -65,10 +64,10 @@ export const InteractiveMap: FC<InteractiveMapProps> = (props) => {
 
       // console.log(c);
 
-      const lived = c.visits.some(v => v.nature == 'Lived')
+      const lived = c.visits.some(v => v.nature == 'lived')
       const firstVisit = c.visits.reduce((prev, curr) => prev.timestamp < curr.timestamp ? prev : curr)
       const nature = c.visits.map(v => v.nature).reduce((prev, curr) => {
-        if (prev && curr && natureOptions.indexOf(prev) > natureOptions.indexOf(curr)) {
+        if (prev && curr && Object.keys(natureOptions).indexOf(prev) > Object.keys(natureOptions).indexOf(curr)) {
           return prev
         }
         return curr

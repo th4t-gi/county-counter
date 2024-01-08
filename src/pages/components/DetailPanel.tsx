@@ -17,8 +17,6 @@ import {isMobile} from 'react-device-detect';
 import { County, CountyFeature, Visit } from '../../resources/utils'
 import { VisitCard } from './VisitCard'
 
-export const natureOptions = ["Layover", "Drove Through", "Stepped In", "Visited", "Stayed", "Lived"]
-
 interface DetailPanelProps {
   feature: CountyFeature
   focused: County | undefined

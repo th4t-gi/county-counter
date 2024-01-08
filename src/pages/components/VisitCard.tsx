@@ -14,10 +14,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import dayjs from 'dayjs'
 import { isMobile } from 'react-device-detect';
 
-import { Visit } from '../../resources/utils'
-import { natureOptions } from './DetailPanel'
-import Box from '@mui/joy/Box'
-
+import { NatureOptions, Visit, natureOptions } from '../../resources/utils'
 
 
 interface VisitCardProps {
@@ -107,10 +104,10 @@ export const VisitCard: FC<VisitCardProps> = (props) => {
           sx={{ flex: '1 1 40%' }}
           placeholder='Nature of visit'
           value={visit.nature}
-          onChange={(e, nature) => editVisit(index, { nature: nature || "Visited" })}
+          onChange={(e, nature) => {if(nature) editVisit(index, { nature })}}
         >
-          {natureOptions.map((v, i) =>
-            <Option key={i} value={v}>{v}</Option>
+          {Object.keys(natureOptions).map((v, i) =>
+            <Option key={i} value={v}>{natureOptions[v as NatureOptions]}</Option>
           )}
         </Select>
       </Stack>

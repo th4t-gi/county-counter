@@ -48,7 +48,6 @@ export const removeCounty = (feature: MapboxGeoJSONFeature, counties: CountyObje
 
 }
 
-export type SortOptions = 'visited' | 'count' | 'year' | 'trips' | 'state'
 
 export interface CountyProperties {
   census_area: number
@@ -89,7 +88,25 @@ export interface FirebaseVisit {
   timestamp: Timestamp
 }
 
-export type NatureOptions = "Layover" | "Drove Through" | "Stepped In" | "Visited" | "Stayed" | "Lived"
+export type SortOptions = 'visited' | 'count' | 'year' | 'trips' | 'state' | 'nature'
+
+export type NatureOptions = "layover" | "driven" | "steppedIn" | "visited" | "stayed" | "lived"
+
+export const sortOptions: { [key in SortOptions]?: string } = {
+  visited: "Visited or Not",
+  count: "# of Visits",
+  year: "Year",
+  nature: "Type of Visit"
+}
+
+export const natureOptions: { [key in NatureOptions]: string } = {
+  layover: "Layover",
+  driven: "Drove Through",
+  steppedIn: "Stepped In",
+  visited: "Visited",
+  stayed: "Stayed",
+  lived: "Lived"
+}
 
 export type CountyFeatureCollection = FeatureCollection<Geometry, County>
 
