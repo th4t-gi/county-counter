@@ -6,14 +6,12 @@ import { County, CountyFeature, CountyFeatureState, CountyObject, getFeatureIden
 import useDoubleLongClick from '../utils/useDoubleLongClick';
 import { bbox } from '@turf/turf';
 
-interface InteractiveMapProps {
+type InteractiveMapProps = {
   counties: CountyObject
   focused: CountyFeature | null
   style?: CSSProperties
   children?: ReactElement | ReactElement[]
-  accessToken: string | undefined
 
-  onMove: (e: ViewStateChangeEvent) => void
   view: Partial<ViewState>
 
   onSingleClick: (feature: CountyFeature) => void
@@ -21,17 +19,16 @@ interface InteractiveMapProps {
   onLongClick: (feature: CountyFeature) => void
 
   setClick: (str: string) => void
-}
+} & React.ComponentProps<typeof Map>
 
 export const InteractiveMap: FC<InteractiveMapProps> = (props) => {
   const { counties,
     focused,
-    style,
     children,
-    accessToken,
     onSingleClick,
     onDoubleClick,
-    onLongClick } = props
+    onLongClick
+  } = props
 
   const mapRef = useRef<MapRef>(null)
   const prevFocusedRef = useRef<CountyFeature | null>(focused)
@@ -130,24 +127,18 @@ export const InteractiveMap: FC<InteractiveMapProps> = (props) => {
   const removeFeatState = (id: number) => mapRef.current?.removeFeatureState(getFeatureIdentifier(id))
 
   return (
-    <>
       <Map
-        mapboxAccessToken={accessToken}
-        ref={mapRef}
-        onMove={props.onMove}
+        {...props}
         {...props.view}
+        ref={mapRef}
         minZoom={2.5}
         maxPitch={0}
         doubleClickZoom={false}
-        style={style}
-        mapStyle="mapbox://styles/juddlee/clo0th5kf00an01p60t1a24s2"
         interactiveLayerIds={['county-fill']}
-        onLoad={onLoad}
+        mapStyle="mapbox://styles/juddlee/clo0th5kf00an01p60t1a24s2"
       >
         {children}
       </Map>
-    </>
-
   )
 
 
