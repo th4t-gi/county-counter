@@ -112,6 +112,7 @@ const useDoubleLongClick = ({
       clickRef.on('click', handleClick);
       clickRef.on('touchend', handleEnd)
       clickRef.on('move', handleMove)
+      clickRef.on('boxzoomstart', handleMove)
 
       // Remove event listener
       return () => {
@@ -120,6 +121,7 @@ const useDoubleLongClick = ({
         clickRef.off('touchstart', handleTouchStart)
         clickRef.off('touchend', handleEnd)
         clickRef.off('move', handleMove)
+        clickRef.off('boxzoomstart', handleMove)
       };
     }
   }, [ref?.current]);
