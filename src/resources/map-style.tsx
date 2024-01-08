@@ -1,11 +1,11 @@
-import { Expression, FillLayer } from 'mapbox-gl';
+import { Expression, FillLayer, LineLayer } from 'mapbox-gl';
 import { SortOptions } from './utils';
 
 const colorArray = ["#63a088","#f9e784","#7582a9","#eb8258","#f8333c","#b24c63"]
 
 export function getStyle(sort: SortOptions) {
 
-  const style = {
+  const style: FillLayer = {
     id: 'county-fill',
     source: 'composite',
     'source-layer': 'base-counties-ids',
@@ -14,12 +14,12 @@ export function getStyle(sort: SortOptions) {
       'fill-color': styles[sort],
       'fill-opacity': ['interpolate', ['linear'], ['zoom'], 9, 1, 15, 0],
     },
-  } as FillLayer;
+  }
 
   return style
 }
 
-export const styles: { [key: string]: Expression | ((arr: number[]) => Expression) } = {
+export const styles: { [key: string]: Expression } = {
   visited: [
     "case",
     ["==", ['feature-state', "lived"], true],
@@ -48,17 +48,36 @@ export const styles: { [key: string]: Expression | ((arr: number[]) => Expressio
       7, '#f46d43',
       8, '#d53e4f',
     ],
-  ],
-  year: (arr: number[]): Expression => {
-    const exp: Expression = [
-      "match",
-      ['feature-state', 'firstYear'],
-    ]
-
-    for (const i in arr) {
-      exp.push(arr[i], colorArray[i])
-    }
-    // arr.map((v, i) => exp.push(v, colorArray[i]))
-    return exp
-  }
+  ]
 }
+
+export const selectedStyle = (counties: number[]): LineLayer => ({
+  type: 'line',
+  source: 'composite',
+  'source-layer': 'base-counties-ids',
+  id: 'selected',
+  layout: {
+    "line-join": "bevel",
+    "line-cap": "round",
+  },
+  filter: [
+    "match",
+    ["id"],
+    [0, ...counties],
+    true,
+    false
+  ],
+  paint: {
+    "line-color": "rgba(119, 137, 238, 0.5)",
+    "line-opacity": 1,
+    "line-width": [
+      "interpolate",
+      ["exponential", 1.56],
+      ["zoom"],
+      2.5,
+      1,
+      6,
+      5
+    ],
+  }
+})

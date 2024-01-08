@@ -4,14 +4,14 @@ import { Layer, MapRef } from 'react-map-gl';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { signOut, User } from 'firebase/auth';
 import { deleteDoc, doc, setDoc, } from 'firebase/firestore';
-import { FillLayer } from 'mapbox-gl';
+import { FillLayer, MapLayerMouseEvent } from 'mapbox-gl';
 
-import { Button, Select, Stack, Option, Box, IconButton, Drawer, Divider, List, ListItem, ListItemButton, Avatar, Dropdown, Menu, MenuItem, MenuButton, ModalClose, DialogTitle, Typography, Snackbar, } from '@mui/joy';
+import { Button, Select, Stack, Option, Box, IconButton, Drawer, Divider, List, ListItem, ListItemButton, Avatar, Dropdown, Menu, MenuItem, MenuButton, ModalClose, DialogTitle, Typography, Snackbar, ButtonGroup, } from '@mui/joy';
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 
 import { County, CountyFeature, CountyObject, SortOptions, Visit, sortOptions } from '../resources/utils';
 import { auth, db, getCounties } from '../resources/firebase';
-import { getStyle } from '../resources/map-style';
+import { getStyle, selectedStyle } from '../resources/map-style';
 
 import { isEqual, isEmpty } from 'lodash'
 
@@ -19,6 +19,7 @@ import { isEqual, isEmpty } from 'lodash'
 import mapboxgl from "mapbox-gl";
 import { DetailPanel } from './components/DetailPanel';
 import { InteractiveMap } from './components/InteractiveMap';
+import { Close, Delete } from '@mui/icons-material';
 // @ts-ignore
 // eslint-disable-next-line import/no-webpack-loader-syntax
 mapboxgl.workerClass =
@@ -56,6 +57,9 @@ interface DashboardState {
   stateCount: number | null,
   click: string
 
+
+  toggleSelect: boolean
+  selected: number[]
   lastModified: CountyFeature | null
 }
 
@@ -84,6 +88,8 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
       countyCount: null,
       stateCount: null,
       lastModified: null,
+      toggleSelect: false,
+      selected: [],
 
       click: 'nothing',
     }
@@ -100,6 +106,10 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
   }
 
   componentDidUpdate(prevProps: DashboardProps, prevState: DashboardState) {
+
+    if (prevState.toggleSelect && !this.state.toggleSelect) {
+      this.setState({ selected: [] })
+    }
 
     if (prevState.sort !== this.state.sort) {
       this.setState({ highlightedStyle: getStyle(this.state.sort) })
@@ -170,6 +180,16 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
     this.setState({ snackbarOpen: false })
   }
 
+  addSelected = (id: number) => {
+    if (!this.state.selected.includes(id)) {
+      this.setState({ selected: [...this.state.selected, id] })
+    }
+  }
+
+  removeSelected = (id: number) => {
+    this.setState({ selected: this.state.selected.filter(v => v !== id) })
+  }
+
   addVisit = (feature: CountyFeature) => {
     const id = feature.id
     let c: County | undefined = this.state.counties[id]
@@ -224,29 +244,50 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
     // this.setClickState("single click")
     console.log('single click', feature);
 
-    this.addVisit(feature)
-    this.setState({ lastModified: feature })
 
-    if (this.state.sort !== 'count' && !!this.getCounty(feature)) {
-      this.setState({ snackbarOpen: true })
-      // this.setFocused(feature)
+    if (this.state.toggleSelect) {
+      if (this.state.selected.includes(feature.id)) {
+        this.removeSelected(feature.id)
+      } else {
+        this.addSelected(feature.id)
+      }
+    } else {
+      this.addVisit(feature)
+      this.setState({ lastModified: feature })
+
+      if (this.state.sort !== 'count' && !!this.getCounty(feature)) {
+        this.setState({ snackbarOpen: true })
+        // this.setFocused(feature)
+      }
     }
   }
 
   onDoubleClick = (feature: CountyFeature) => {
     // this.setClickState("double click")
     console.log('double click', feature);
-    if (!!this.getCounty(feature)) this.setVisits(feature.id, [])
-    
-    this.setState({ lastModified: feature })
+
+    if (this.state.toggleSelect) {
+      this.removeSelected(feature.id)
+    } else {
+      if (!!this.getCounty(feature)) this.setVisits(feature.id, [])
+
+      this.setState({ lastModified: feature })
+    }
   }
 
   onLongClick = (feature: CountyFeature) => {
     console.log("long click", feature)
 
-    this.setFocused(feature)
+    if (!this.state.toggleSelect) this.setFocused(feature)
   }
 
+
+  onMouseMove = (e: MapLayerMouseEvent) => {
+    if (this.state.toggleSelect && e.originalEvent?.shiftKey && e.originalEvent.buttons && e.features?.length) {
+      const feature = e.features[0] as CountyFeature
+      this.addSelected(feature.id)
+    }
+  }
 
 
   private logout = () => {
@@ -304,12 +345,27 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
         </Drawer>
 
         {/* TOP MENU */}
-        <Box bgcolor='white' className="shadow-lg">
-          <Stack p={1} direction='row' spacing={1}>
-            <IconButton size="sm" onClick={this.toggleDrawer(true)}>
+        <Stack bgcolor={'white'} className='shadow-lg' p={1} direction='row' spacing={1}>
+          <Avatar
+            onClick={() => this.props.navigate('/')}
+            // size='lg'
+            variant='plain'
+            src="/logo700.png"
+            sx={{ borderRadius: 0 }}
+          />
+          {/* <IconButton size="sm" onClick={this.toggleDrawer(true)}>
               <MenuRoundedIcon></MenuRoundedIcon>
-            </IconButton>
-            <Select defaultValue={this.state.sort} placeholder="Sort by" onChange={(e, newValue) => { if(newValue) this.setState({ sort: newValue })}}>
+            </IconButton> */}
+
+          {/* TODO: PUT THESE TWO ELEMENTS IN A "OPTIONS" PopOver. Hide/Show Names as a Toggle and Sort as Radio Buttons? */}
+          {!this.state.toggleSelect && <>
+            <Select
+              defaultValue={this.state.sort}
+              placeholder="Sort by"
+              onChange={(e, newValue) => {
+                if (newValue) this.setState({ sort: newValue })
+              }}
+            >
               {Object.keys(sortOptions).map((option, index) => (
                 <Option sx={{ mx: 1, borderRadius: 5 }} key={index} value={option}>{sortOptions[option as SortOptions]}</Option>
               ))}
@@ -318,37 +374,56 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
             <Button variant='soft' onClick={() => { this.setState({ countyNames: !this.state.countyNames }) }}>
               {this.state.countyNames ? "Hide Names" : "Show Names"}
             </Button>
+          </>}
 
-            {/* Spacer */}
-            <Box flexGrow={1}></Box>
 
-            <Dropdown>
-              <MenuButton slots={{ root: Avatar }} sx={{
-                '& .MuiAvatar-root:hover': {
-                  opacity: 0.6,
-                }
-              }}>
-                <Avatar />
-              </MenuButton>
-              <Menu placement='bottom-start' sx={{ p: 1, zIndex: 10}}>
-                <MenuItem >
-                  Profile
-                </MenuItem>
-                <MenuItem>
-                  My Stats
-                </MenuItem>
-                <MenuItem>
-                  Settings
-                </MenuItem>
-                <Divider></Divider>
-                <MenuItem onClick={this.logout}>
-                  Log Out
-                </MenuItem>
-              </Menu>
-            </Dropdown>
+          {this.state.toggleSelect ?
+            <ButtonGroup variant='plain' spacing={2} color='primary'>
+              <IconButton onClick={() => this.setState({ toggleSelect: false })}>
+                <Close />
+              </IconButton>
+              <Typography level='body-sm' fontWeight="lg" color='primary' my='auto'>
+                {this.state.selected.length} Selected
+              </Typography>
+              <Button>Edit</Button>
+              <Button>Add Trip</Button>
+              <Button>Three</Button>
+              <IconButton>
+                <Delete />
+              </IconButton>
+            </ButtonGroup>
+            : <Button variant='soft' onClick={() => { this.setState({ toggleSelect: true }) }}>Select</Button>
+          }
 
-          </Stack>
-        </Box>
+          {/* Spacer */}
+          <Box flexGrow={1}></Box>
+
+          <Dropdown>
+            <MenuButton slots={{ root: Avatar }} sx={{
+              '& .MuiAvatar-root:hover': {
+                opacity: 0.6,
+              }
+            }}>
+              <Avatar />
+            </MenuButton>
+            <Menu placement='bottom-start' sx={{ p: 1, zIndex: 10 }}>
+              <MenuItem >
+                My Profile
+              </MenuItem>
+              <MenuItem>
+                My Trips
+              </MenuItem>
+              <MenuItem>
+                Settings
+              </MenuItem>
+              <Divider></Divider>
+              <MenuItem onClick={this.logout}>
+                Log Out
+              </MenuItem>
+            </Menu>
+          </Dropdown>
+
+        </Stack>
 
         <Box p={1} m={1} borderRadius={5} bgcolor={'white'} width={180} position={'absolute'}>
           <Typography level='body-lg'>Center:</Typography>
@@ -376,7 +451,7 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
             onClose={() => this.setFocused(null)}
           />}
 
-       <Snackbar
+        <Snackbar
           variant="plain"
           // color="success"
           // autoHideDuration={3000}
@@ -386,7 +461,7 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
           anchorOrigin={{ horizontal: 'center', vertical: 'bottom' }}
           endDecorator={
             <Button
-              onClick={() => {this.removeVisit(this.state.lastModified?.id)(0); this.handleSnackbarClose()}}
+              onClick={() => { this.removeVisit(this.state.lastModified?.id)(0); this.handleSnackbarClose() }}
               size="sm"
               variant="plain"
             // color="success"
@@ -399,19 +474,26 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
         </Snackbar>
 
         <InteractiveMap
-          accessToken={this.accessToken}
           counties={this.state.counties}
           focused={this.state.focused}
           style={{ width: '100%', height: '100%', zIndex: -1, position: 'absolute', top: 0 }}
-          onMove={this.onMove}
           view={this.state.view}
 
           onSingleClick={this.onSingleClick}
           onDoubleClick={this.onDoubleClick}
           onLongClick={this.onLongClick}
 
+          onMove={this.onMove}
+          onDragStart={(e) => {
+            if (this.state.toggleSelect && e.originalEvent?.shiftKey) e.target.dragPan.disable()
+          }}
+          onDragEnd={(e) => e.target.dragPan.enable()}
+          onMouseMove={this.onMouseMove}
+          boxZoom={!this.state.toggleSelect}
+
           setClick={this.setClickState}
         >
+          <Layer {...selectedStyle(this.state.selected)} />
           <Layer beforeId="aeroway-polygon" {...this.state.highlightedStyle} />
           <Layer type="symbol" id='county-labels' layout={{ visibility: (this.state.countyNames ? "visible" : "none") }} />
         </InteractiveMap>
