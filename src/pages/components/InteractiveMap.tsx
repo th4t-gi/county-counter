@@ -103,10 +103,11 @@ export const InteractiveMap: FC<InteractiveMapProps> = (props) => {
   }, [focused])
 
   const getFeature = (cb: (feature: CountyFeature) => void) => (e: MapLayerMouseEvent | MapLayerTouchEvent) => {
-    const features = mapRef.current?.queryRenderedFeatures(e.point).filter(v => v.sourceLayer == "base-counties-ids")
+    const features = mapRef.current?.queryRenderedFeatures(e.point, {
+      layers: ['county-fill']
+    })
 
     if (features?.length) {
-
       cb(features[0] as CountyFeature)
     }
   }

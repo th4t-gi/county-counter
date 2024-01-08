@@ -105,21 +105,29 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
       this.setState({ highlightedStyle: getStyle(this.state.sort) })
     }
 
-    if (!isEmpty(prevState.counties) && !isEqual(this.state.counties, prevState.counties)) {
+    if (!isEqual(this.state.counties, prevState.counties)) {
 
+      if (!isEmpty(prevState.counties)) {
+        Object.values(this.state.counties).forEach(c => {
+          const prev = prevState.counties[c.id]
 
-      Object.values(this.state.counties).forEach(c => {
-        const prev = prevState.counties[c.id]
+          if (!isEqual(prev?.visits, c.visits)) {
+            const docRef = doc(db, 'users', this.props.user.uid, 'counties', c.id.toString())
 
-        if (!isEqual(prev?.visits, c.visits)) {
-          const docRef = doc(db, 'users', this.props.user.uid, 'counties', c.id.toString())
+            console.log(c.visits?.length ? 'setting' : 'deleting', c.id);
+            //BUG: when counties collection doesn't exist, first county isn't set till a 2nd county is clicked
+            if (c.visits?.length) setDoc(docRef, c);
+            else deleteDoc(docRef).catch(console.log);
+          }
+        })
+      }
 
-          console.log(c.visits?.length ? 'setting' : 'deleting', c.id);
-          //BUG: when counties collection doesn't exist, first county isn't set till a 2nd county is clicked
-          if (c.visits?.length) setDoc(docRef, c);
-          else deleteDoc(docRef).catch(console.log);
-        }
-      })
+      const countyCount = Object.keys(this.state.counties).length
+      this.setState({ countyCount })
+
+      const states = Object.values(this.state.counties).map(c => c.state)
+        .filter((v, i, arr) => arr.indexOf(v) === i)
+      this.setState({ stateCount: states.length })
 
     }
 
@@ -278,20 +286,20 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
               <Avatar onClick={() => this.props.navigate('/')} size='lg' variant='plain' src="/logo700.png" sx={{ borderRadius: 0 }} />
             </DialogTitle>
             <List>
-              {['Inbox', 'Starred', 'Send email', 'Drafts'].map((text) => (
+              {['Trips', 'List of Counties', 'Send email', 'Drafts'].map((text) => (
                 <ListItem key={text}>
                   <ListItemButton>{text}</ListItemButton>
                 </ListItem>
               ))}
             </List>
-            <Divider />
+            {/* <Divider />
             <List>
               {['All mail', 'Trash', 'Spam'].map((text) => (
                 <ListItem key={text}>
                   <ListItemButton>{text}</ListItemButton>
                 </ListItem>
               ))}
-            </List>
+            </List> */}
           </Box>
         </Drawer>
 
