@@ -141,46 +141,7 @@ const Login: FC<LoginProps> = () => {
         </form>
       </Card>
 
-      <Modal
-        open={errorOpen}
-        onClose={() => setErrorOpen(false)}
-      >
-        <ModalDialog color="danger" layout="center" invertedColors variant='soft' role="alertdialog">
-          <DialogTitle>
-            Uh Oh!
-          </DialogTitle>
-          {process.env.REACT_APP_ENV == 'production' ?
-            <DialogContent>
-              It looks like you are trying to log into the County Counter app with a development account.
-            </DialogContent> :
-            <DialogContent>
-              It looks like you are trying to log into countycounter-dev.web.app instead of countycounter.com.
-            </DialogContent>
-          }
-
-          <DialogActions>
-            {process.env.REACT_APP_ENV == 'production' ?
-              <Link href="http://countycounter-dev.web.app">
-                <Button variant="solid" color="primary" endDecorator={<LaunchIcon />} href='/test'>
-                  Take me to the development app
-                </Button>
-              </Link>
-              :
-              <Link href="http://county-counting.web.app">
-                <Button variant="solid" color="primary" endDecorator={<LaunchIcon />}>
-                  Take me to County Counter
-                </Button>
-              </Link>
-            }
-
-            <Button variant="outlined" color="primary" onClick={() => navigate("/register")}>
-              Create a {process.env.REACT_APP_ENV == 'production' ? "County Counter" : "dev"} account
-            </Button>
-          </DialogActions>
-        </ModalDialog>
-      </Modal>
-
-      <StaticMap random mask live className='fixed left-0 top-0 -z-10 object-cover' />
+      <StaticMap defaultCoords={{ lat: 39, long: -108 }} className='fixed left-0 top-0 -z-10 h-full w-full object-cover opacity-40' />
 
     </Box>
   )
