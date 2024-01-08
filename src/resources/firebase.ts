@@ -1,9 +1,9 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { createUserWithEmailAndPassword, getAuth, signInWithEmailAndPassword, signOut } from 'firebase/auth'
-import {  Firestore, collection, doc, getDocs, initializeFirestore, persistentLocalCache, query, setDoc } from "firebase/firestore"
+import {  DocumentData, Firestore, QueryDocumentSnapshot, SnapshotOptions, collection, doc, getDocs, initializeFirestore, persistentLocalCache, query, setDoc } from "firebase/firestore"
 import { getStorage } from 'firebase/storage'
-import { County, CountyObject } from "./utils";
+import { County, CountyObject, FirebaseVisit, Visit } from "./utils";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -28,15 +28,31 @@ export const getUserDoc = (db: Firestore, uid: string) => {
   return doc(db, "users", uid)
 }
 
+
 // export const setCounty = (db: Firestore, uid: string, data: County) => {
 //   const docRef = doc(db, 'users', uid, 'counties', data.id.toString())
 //   setDoc(docRef, data);
 // }
 
+const converter = {
+  toFirestore(county: County): DocumentData {
+    return county
+    // return {title: post.title, author: post.author};
+  },
+  fromFirestore(
+    snapshot: QueryDocumentSnapshot,
+    options: SnapshotOptions
+  ): County {
+    const data = snapshot.data(options)!;
+    let visits: Visit[] = (data.visits as FirebaseVisit[]).map(v => ({...v, timestamp: v.timestamp.toDate()}))
+    return {...data, visits} as County
+  }
+};
+
 export const getCounties = async (db: Firestore, uid: string) => {
   const countiesRef = collection(db, 'users', uid, 'counties');
 
-  const snapshot = await getDocs(query(countiesRef))
+  const snapshot = await getDocs(query(countiesRef).withConverter(converter))
   const counties = snapshot.docs.reduce((acc: CountyObject, d) => {
     const doc = d.data() as County
     acc[doc.id] = doc
@@ -52,6 +68,7 @@ export const initializeUserFirestore = (db: Firestore, user: { username: string,
   const data = {
     username: user.username,
     hometown: user.hometown,
+    admin: false,
     settings: {
       theme: "light"
     }

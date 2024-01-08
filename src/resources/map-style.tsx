@@ -1,7 +1,9 @@
 import { Expression, FillLayer } from 'mapbox-gl';
 import { SortOptions } from './utils';
 
-export function generateStyle(sort: SortOptions) {
+const colorArray = ["#63a088","#f9e784","#7582a9","#eb8258","#f8333c","#b24c63"]
+
+export function getStyle(sort: SortOptions) {
 
   const style = {
     id: 'county-fill',
@@ -17,14 +19,14 @@ export function generateStyle(sort: SortOptions) {
   return style
 }
 
-export const styles: {[key: string]: Expression} = {
+export const styles: { [key: string]: Expression | ((arr: number[]) => Expression) } = {
   visited: [
     "case",
     ["==", ['feature-state', "lived"], true],
     "#000000",
     ["==", ["feature-state", "visited"], true],
     "#a9c0ea",
-    
+
     "rgba(171, 195, 231, 0)"
   ],
   count: [
@@ -44,14 +46,19 @@ export const styles: {[key: string]: Expression} = {
       5, '#fee08b',
       6, '#fdae61',
       7, '#f46d43',
-      8, '#d53e4f'
-    ]
+      8, '#d53e4f',
+    ],
   ],
-  // year: [
-  //   "match",
-  //   ["id"],
-  //   [48147, 48277, 48231, 48119, 48085, 48181],
-  //   '#66c2a5',
-  //   "rgba(171, 195, 231, 0)",
-  // ]
+  year: (arr: number[]): Expression => {
+    const exp: Expression = [
+      "match",
+      ['feature-state', 'firstYear'],
+    ]
+
+    for (const i in arr) {
+      exp.push(arr[i], colorArray[i])
+    }
+    // arr.map((v, i) => exp.push(v, colorArray[i]))
+    return exp
+  }
 }
