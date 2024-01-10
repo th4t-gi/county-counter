@@ -117,3 +117,20 @@ export interface CountyFeature extends MapboxGeoJSONFeature {
   state: County,
   properties: CountyProperties
 }
+
+export interface USCity {
+  city: string
+  city_ascii: string
+  state_id: string
+  state_name: string
+  county_fips: number
+  county_name: string
+  lat: number
+  lng: number
+  population: number
+  density: number
+  military: boolean
+  timezone: string
+  ranking: number
+  id: number
+}
