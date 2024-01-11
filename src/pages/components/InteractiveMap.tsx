@@ -1,4 +1,4 @@
-import React, { CSSProperties, FC, ReactElement, RefObject, useEffect, useRef } from 'react'
+import React, { CSSProperties, FC, ReactElement, ReactNode, RefObject, useEffect, useRef } from 'react'
 import Map, { FillLayer, Layer, MapLayerMouseEvent, MapLayerTouchEvent, MapRef, MapboxEvent, ViewState, ViewStateChangeEvent } from 'react-map-gl';
 
 import { County, CountyFeature, CountyFeatureState, CountyObject, getFeatureIdentifier, natureOptions } from '../../resources/utils'
@@ -10,7 +10,7 @@ interface InteractiveMapProps {
   counties: CountyObject
   focused: CountyFeature | null
   style?: CSSProperties
-  children?: ReactElement | ReactElement[]
+  children?: ReactNode
   accessToken: string | undefined
 
   onMove: (e: ViewStateChangeEvent) => void
