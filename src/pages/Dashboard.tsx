@@ -130,6 +130,7 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
     if (!isEqual(this.state.counties, prevState.counties)) {
 
       if (!isEmpty(prevState.counties)) {
+
         Object.values(this.state.counties).forEach(c => {
           const prev = prevState.counties[c.id]
 
@@ -144,10 +145,10 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
         })
       }
 
-      const countyCount = Object.keys(this.state.counties).length
-      this.setState({ countyCount })
+      const counties = Object.values(this.state.counties).filter(v => v.visits.length)
+      this.setState({ countyCount: counties.length })
 
-      const states = Object.values(this.state.counties).map(c => c.state)
+      const states = counties.map(c => c.state)
         .filter((v, i, arr) => arr.indexOf(v) === i)
       this.setState({ stateCount: states.length })
 
@@ -172,6 +173,14 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
     })
   }
 
+  removeCounty = (county: County) => {
+
+    let counties = this.state.counties
+    delete counties[county.id]
+
+    this.setState({ counties })
+  }
+
   setVisits = (id: number, visits: Visit[]) => {
     const c = this.state.counties[id]
 
@@ -179,27 +188,6 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
       ...c,
       visits
     })
-  }
-
-  setFocused = (feature?: CountyFeature) => {
-    // this.setClickState("long click")
-    // console.log("long click", feature)
-
-    this.setState({ focused: feature });
-  }
-
-  handleSnackbarClose = () => {
-    this.setState({ snackbarOpen: false })
-  }
-
-  addSelected = (id: number) => {
-    if (!this.state.selected.includes(id)) {
-      this.setState({ selected: [...this.state.selected, id] })
-    }
-  }
-
-  removeSelected = (id: number) => {
-    this.setState({ selected: this.state.selected.filter(v => v !== id) })
   }
 
   addVisit = (feature: CountyFeature) => {
@@ -244,6 +232,28 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
     const visits = c.visits?.filter((v, i) => i !== index)
 
     this.setVisits(id, visits)
+  }
+
+
+  setFocused = (feature?: CountyFeature) => {
+    // this.setClickState("long click")
+    // console.log("long click", feature)
+
+    this.setState({ focused: feature });
+  }
+
+  handleSnackbarClose = () => {
+    this.setState({ snackbarOpen: false })
+  }
+
+  addSelected = (id: number) => {
+    if (!this.state.selected.includes(id)) {
+      this.setState({ selected: [...this.state.selected, id] })
+    }
+  }
+
+  removeSelected = (id: number) => {
+    this.setState({ selected: this.state.selected.filter(v => v !== id) })
   }
 
   private onMove = (e: { viewState: { longitude: number; latitude: number; zoom: number } }) => {
