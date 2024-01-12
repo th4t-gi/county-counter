@@ -14,13 +14,13 @@ import { MapEvent, MapLayerMouseEvent, MapLayerTouchEvent, MapRef } from 'react-
  */
 
 interface Parameters {
-  ref: RefObject<any> | undefined,
+  ref: RefObject<any | null>,
   longLatency: number,
   clickLatency: number,
-  onSingleClick: (e: MapLayerMouseEvent | MapLayerTouchEvent) => void,
-  onDoubleClick: (e: MapLayerMouseEvent | MapLayerTouchEvent) => void,
-  onLongClick: (e: MapLayerMouseEvent | MapLayerTouchEvent) => void
-  setClick: (str: string) => void
+  onSingleClick?: (e: MapLayerMouseEvent | MapLayerTouchEvent) => void,
+  onDoubleClick?: (e: MapLayerMouseEvent | MapLayerTouchEvent) => void,
+  onLongClick?: (e: MapLayerMouseEvent | MapLayerTouchEvent) => void
+  setClick?: (str: string) => void
 }
 
 const useDoubleLongClick = ({
@@ -48,10 +48,10 @@ const useDoubleLongClick = ({
       const handleStart = (e: MapLayerMouseEvent | MapLayerTouchEvent) => {
         moving = false
         setClick('start not moving')
-        
+
         timer = setTimeout(() => {
           console.log();
-          
+
           if (!moving) {
             onLongClick(e)
           }
@@ -70,7 +70,7 @@ const useDoubleLongClick = ({
             if (clickCount === 1) onSingleClick(e);
             else if (clickCount === 2) onDoubleClick(e);
             else if (clickCount === 3) console.log('hi tripple click');
-            
+
             clickCount = 0;
             touch = false
             moving = false
@@ -99,7 +99,7 @@ const useDoubleLongClick = ({
           handleEnd(e)
         }
       }
-      
+
       const handleMove = (e: MapEvent) => {
         // console.log('moving');
         setClick('moving')

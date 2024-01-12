@@ -7,7 +7,7 @@ interface StaticMapProps {
     long: number,
     zoom: number
   }
-  className: string
+  className?: string
 }
 
 

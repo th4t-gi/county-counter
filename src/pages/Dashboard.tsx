@@ -1,6 +1,6 @@
-import React, { Component } from 'react';
+import React, { Component, RefObject } from 'react';
 import { NavigateFunction, useNavigate } from 'react-router-dom';
-import { Layer, MapRef } from 'react-map-gl';
+import { GeolocateControl, Layer, MapRef, Popup } from 'react-map-gl';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { signOut, User } from 'firebase/auth';
 import { deleteDoc, doc, setDoc, } from 'firebase/firestore';
@@ -40,10 +40,9 @@ interface DashboardProps {
 }
 
 interface DashboardState {
-  focused: CountyFeature | null,
+  focused?: CountyFeature,
   sort: SortOptions
-  countyNames: boolean,
-  mapRef: MapRef | null,
+  mapRef?: RefObject<MapRef>,
   counties: CountyObject,
   view: {
     longitude: number,
@@ -57,10 +56,21 @@ interface DashboardState {
   stateCount: number | null,
   click: string
 
+  toggleCountyNames: boolean,
+  toggleHover: boolean,
+  geoControlRef?: RefObject<mapboxgl.GeolocateControl>
 
   toggleSelect: boolean
   selected: number[]
-  lastModified: CountyFeature | null
+  lastModified?: CountyFeature
+
+  hoverInfo: HoverInfo | null
+}
+
+interface HoverInfo {
+  latitude: number
+  longitude: number,
+  county?: CountyFeature
 }
 
 class Dashboard extends Component<DashboardProps, DashboardState> {
@@ -72,10 +82,8 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
     const sort = 'visited'
 
     this.state = {
-      focused: null,
       sort,
-      countyNames: true,
-      mapRef: null,
+      toggleCountyNames: true,
       counties: {},
       view: {
         longitude: -98.5696,
@@ -87,10 +95,13 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
       snackbarOpen: false,
       countyCount: null,
       stateCount: null,
-      lastModified: null,
       toggleSelect: false,
+      toggleHover: false,
       selected: [],
+      geoControlRef: React.createRef(),
+      mapRef: React.createRef(),
 
+      hoverInfo: null,
       click: 'nothing',
     }
 
@@ -103,6 +114,7 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
     getCounties(db, this.props.user.uid).then(counties => {
       this.setState({ counties })
     })
+
   }
 
   componentDidUpdate(prevProps: DashboardProps, prevState: DashboardState) {
@@ -169,7 +181,7 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
     })
   }
 
-  setFocused = (feature: CountyFeature | null) => {
+  setFocused = (feature?: CountyFeature) => {
     // this.setClickState("long click")
     // console.log("long click", feature)
 
@@ -264,7 +276,7 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
 
   onDoubleClick = (feature: CountyFeature) => {
     // this.setClickState("double click")
-    console.log('double click', feature);
+    // console.log('double click', feature);
 
     if (this.state.toggleSelect) {
       this.removeSelected(feature.id)
@@ -276,16 +288,26 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
   }
 
   onLongClick = (feature: CountyFeature) => {
-    console.log("long click", feature)
+    // console.log("long click", feature)
 
     if (!this.state.toggleSelect) this.setFocused(feature)
   }
 
 
   onMouseMove = (e: MapLayerMouseEvent) => {
-    if (this.state.toggleSelect && e.originalEvent?.shiftKey && e.originalEvent.buttons && e.features?.length) {
-      const feature = e.features[0] as CountyFeature
-      this.addSelected(feature.id)
+    const county: CountyFeature | undefined = e.features && e.features[0] as CountyFeature
+
+    if (this.state.toggleSelect && e.originalEvent?.shiftKey && e.originalEvent.buttons && county) {
+      this.addSelected(county.id)
+    } else {
+
+      this.setState({
+        hoverInfo: {
+          latitude: e.lngLat.lat,
+          longitude: e.lngLat.lng,
+          county
+        }
+      })
     }
   }
 
@@ -371,8 +393,16 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
               ))}
             </Select>
 
-            <Button variant='soft' onClick={() => { this.setState({ countyNames: !this.state.countyNames }) }}>
-              {this.state.countyNames ? "Hide Names" : "Show Names"}
+            <Button variant='soft' onClick={() => { this.setState({ toggleCountyNames: !this.state.toggleCountyNames }) }}>
+              {this.state.toggleCountyNames ? "Hide Names" : "Show Names"}
+            </Button>
+
+            <Button variant='soft' onClick={() => { this.setState({ toggleHover: !this.state.toggleHover }) }}>
+              {this.state.toggleHover ? "Hide Info" : "Show Info"}
+            </Button>
+
+            <Button variant='soft'>
+              {this.state.toggleHover ? "Hide Info" : "Travel Mode"}
             </Button>
           </>}
 
@@ -385,9 +415,9 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
               <Typography level='body-sm' fontWeight="lg" color='primary' my='auto'>
                 {this.state.selected.length} Selected
               </Typography>
-              <Button>Edit</Button>
+              <Button>Edit Trip</Button>
               <Button>Add Trip</Button>
-              <Button>Three</Button>
+              {/* <Button>{this.state.selected.length > 1 ? "" }</Button> */}
               <IconButton>
                 <Delete />
               </IconButton>
@@ -437,6 +467,10 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
           <Typography level='body-sm'>Number of Counties: {this.state.countyCount}</Typography>
           <Typography level='body-sm'>Number of States: {this.state.stateCount}</Typography>
 
+          {/* {this.context ?
+            <Typography>{this.state.geoControlRef.}, {this.context.coords.longitude}</Typography>
+            : <Typography>Loading...</Typography>
+          } */}
           {/* <Typography>{this.state.click}</Typography> */}
         </Box>
 
@@ -448,7 +482,7 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
             addVisit={this.addVisit}
             editVisit={this.editVisit}
             removeVisit={this.removeVisit}
-            onClose={() => this.setFocused(null)}
+            onClose={() => this.setFocused()}
           />}
 
         <Snackbar
@@ -474,6 +508,7 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
         </Snackbar>
 
         <InteractiveMap
+          ref={this.state.mapRef}
           counties={this.state.counties}
           focused={this.state.focused}
           style={{ width: '100%', height: '100%', zIndex: -1, position: 'absolute', top: 0 }}
@@ -491,11 +526,39 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
           onMouseMove={this.onMouseMove}
           boxZoom={!this.state.toggleSelect}
 
+          onLoad={(e) => {
+            this.state.geoControlRef?.current?.trigger()
+          }}
           setClick={this.setClickState}
         >
           <Layer {...selectedStyle(this.state.selected)} />
           <Layer beforeId="aeroway-polygon" {...this.state.highlightedStyle} />
-          <Layer type="symbol" id='county-labels' layout={{ visibility: (this.state.countyNames ? "visible" : "none") }} />
+          <Layer type="symbol" id='county-labels' layout={{ visibility: (this.state.toggleCountyNames ? "visible" : "none") }} />
+          <GeolocateControl
+            ref={this.state.geoControlRef}
+            // ref={}
+            onGeolocate={(e) => {
+              this.state.mapRef?.current?.flyTo({ zoom: this.state.view.zoom })
+
+            }}
+            fitBoundsOptions={{ maxZoom: 12 }}
+            position='top-right'
+            positionOptions={{
+              enableHighAccuracy: false,
+              maximumAge: Infinity
+            }}
+            trackUserLocation
+          />
+          {this.state.hoverInfo?.county && this.state.view.zoom > 3 && this.state.toggleHover &&
+            <Popup
+              latitude={this.state.hoverInfo.latitude}
+              longitude={this.state.hoverInfo.longitude}
+              offset={[0, -10] as [number, number]}
+              closeButton={false}
+              closeOnClick={false}
+            >
+              {this.state.hoverInfo.county.properties.name}
+            </Popup>}
         </InteractiveMap>
 
       </Box>

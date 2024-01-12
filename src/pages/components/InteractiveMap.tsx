@@ -1,4 +1,4 @@
-import React, { CSSProperties, FC, ReactElement, RefObject, useEffect, useRef } from 'react'
+import React, { CSSProperties, FC, ReactElement, ReactNode, RefObject, forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
 import Map, { FillLayer, Layer, MapLayerMouseEvent, MapLayerTouchEvent, MapRef, MapboxEvent, ViewState, ViewStateChangeEvent } from 'react-map-gl';
 
 import { County, CountyFeature, CountyFeatureState, CountyObject, getFeatureIdentifier, natureOptions } from '../../resources/utils'
@@ -8,20 +8,20 @@ import { bbox } from '@turf/turf';
 
 type InteractiveMapProps = {
   counties: CountyObject
-  focused: CountyFeature | null
+  focused?: CountyFeature
   style?: CSSProperties
-  children?: ReactElement | ReactElement[]
+  children?: ReactNode
 
   view: Partial<ViewState>
 
-  onSingleClick: (feature: CountyFeature) => void
-  onDoubleClick: (feature: CountyFeature) => void
-  onLongClick: (feature: CountyFeature) => void
+  onSingleClick?: (feature: CountyFeature) => void
+  onDoubleClick?: (feature: CountyFeature) => void
+  onLongClick?: (feature: CountyFeature) => void
 
-  setClick: (str: string) => void
+  setClick?: (str: string) => void
 } & React.ComponentProps<typeof Map>
 
-export const InteractiveMap: FC<InteractiveMapProps> = (props) => {
+export const InteractiveMap: FC<InteractiveMapProps> = forwardRef((props, ref) => {
   const { counties,
     focused,
     children,
@@ -31,7 +31,7 @@ export const InteractiveMap: FC<InteractiveMapProps> = (props) => {
   } = props
 
   const mapRef = useRef<MapRef>(null)
-  const prevFocusedRef = useRef<CountyFeature | null>(focused)
+  const prevFocusedRef = useRef<CountyFeature | undefined>(focused)
 
 
   const onLoad = (e: MapboxEvent) => {
@@ -50,7 +50,7 @@ export const InteractiveMap: FC<InteractiveMapProps> = (props) => {
 
   useEffect(() => {
 
-    console.log('counties updated!');
+    console.log('rendering map');
 
     Object.values(counties).forEach(c => {
 
@@ -99,47 +99,49 @@ export const InteractiveMap: FC<InteractiveMapProps> = (props) => {
     prevFocusedRef.current = focused
   }, [focused])
 
-  const getFeature = (cb: (feature: CountyFeature) => void) => (e: MapLayerMouseEvent | MapLayerTouchEvent) => {
+  useImperativeHandle<MapRef | undefined, MapRef | undefined>(
+    ref,
+    () => mapRef.current || undefined
+  )
+
+  const _onClick = (eventHandler?: (feature: CountyFeature) => void) => (e: MapLayerMouseEvent | MapLayerTouchEvent) => {
     const features = mapRef.current?.queryRenderedFeatures(e.point, {
       layers: ['county-fill']
     })
 
-    if (features?.length) {
-      cb(features[0] as CountyFeature)
+    if (features?.length && eventHandler) {
+      eventHandler(features[0] as CountyFeature)
     }
   }
-
 
   useDoubleLongClick({
     ref: mapRef,
     clickLatency: 250,
     longLatency: 400,
-    onSingleClick: getFeature(onSingleClick),
-    onDoubleClick: getFeature(onDoubleClick),
-    onLongClick: getFeature(onLongClick),
+    onSingleClick: _onClick(onSingleClick),
+    onDoubleClick: _onClick(onDoubleClick),
+    onLongClick: _onClick(onLongClick),
 
     setClick: props.setClick
   });
 
 
-  const getFeatState = (id: number) => mapRef.current?.getFeatureState(getFeatureIdentifier(id)) as County
+  const getFeatState = (id: number) => mapRef?.current?.getFeatureState(getFeatureIdentifier(id)) as County
   const setFeatState = (state: CountyFeatureState | { id: number }) => mapRef.current?.setFeatureState(getFeatureIdentifier(state.id), state)
   const removeFeatState = (id: number) => mapRef.current?.removeFeatureState(getFeatureIdentifier(id))
 
   return (
-      <Map
-        {...props}
-        {...props.view}
-        ref={mapRef}
-        minZoom={2.5}
-        maxPitch={0}
-        doubleClickZoom={false}
-        interactiveLayerIds={['county-fill']}
-        mapStyle="mapbox://styles/juddlee/clo0th5kf00an01p60t1a24s2"
-      >
-        {children}
-      </Map>
+    <Map
+      {...props}
+      {...props.view}
+      ref={mapRef}
+      minZoom={2.5}
+      maxPitch={0}
+      doubleClickZoom={false}
+      interactiveLayerIds={['county-fill']}
+      mapStyle="mapbox://styles/juddlee/clo0th5kf00an01p60t1a24s2"
+    >
+      {children}
+    </Map>
   )
-
-
-}
+})

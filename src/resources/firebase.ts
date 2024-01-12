@@ -9,7 +9,7 @@ import { County, CountyObject, FirebaseVisit, Visit } from "./utils";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyBK2kh0-HoYMocw7IoaWZeGJLLEocvTHSA",
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
   authDomain: "county-counting.firebaseapp.com",
   projectId: "county-counting",
   storageBucket: "county-counting.appspot.com",
@@ -18,10 +18,11 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig, );
+const app = initializeApp(firebaseConfig);
+const databaseId = process.env.REACT_APP_ENV === 'production' ? '(default)' : 'countycounter-dev'
 
 export const auth = getAuth(app)
-export const db = initializeFirestore(app, {localCache: persistentLocalCache({})});
+export const db = initializeFirestore(app, {localCache: persistentLocalCache({})}, databaseId);
 export const storage = getStorage(app);
 
 export const getUserDoc = (db: Firestore, uid: string) => {
