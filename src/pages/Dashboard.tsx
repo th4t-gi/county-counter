@@ -101,6 +101,7 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
       toggleSelect: false,
       toggleHover: false,
       toggleTravelMode: true,
+      geolocateEvent: "hi",
       selected: [],
       geoControlRef: React.createRef(),
       mapRef: React.createRef(),
@@ -486,8 +487,7 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
           <Typography level='body-sm'>Number of States: {this.state.stateCount}</Typography>
           <Typography level='body-sm'>Curr County name: {this.state.currCounty?.properties.name}</Typography>
           <Typography level='body-sm'>Curr County: {JSON.stringify(this.state.currCounty)}</Typography>
-          <Typography level='body-sm'>Event info: {JSON.stringify(this.state.geolocateEvent)}</Typography>
-
+          <Typography level='body-sm'>Event info: {this.state.geolocateEvent}</Typography>
           {/* {this.context ?
             <Typography>{this.state.geoControlRef.}, {this.context.coords.longitude}</Typography>
             : <Typography>Loading...</Typography>
@@ -557,10 +557,10 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
           <Layer type="symbol" id='county-labels' layout={{ visibility: (this.state.toggleCountyNames ? "visible" : "none") }} />
           <GeolocateControl
             ref={this.state.geoControlRef}
-            // ref={}
             onGeolocate={(e) => {
+              console.log("geolocating")
               this.setState({geolocateEvent: JSON.stringify(e)})
-              console.log(JSON.stringify(e));
+              alert(JSON.stringify(e));
               console.log(e)
               
               if (this.state.toggleTravelMode) {
@@ -569,7 +569,7 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
                 const features = this.state.mapRef?.current?.queryRenderedFeatures(point, {layers: ['base-counties-ids']})
 
                 console.log(features);
-                console.log(JSON.stringify(features));
+                alert(JSON.stringify(features));
                 
                 
                 if (features?.length) {
