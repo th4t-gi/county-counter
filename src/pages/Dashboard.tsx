@@ -59,6 +59,8 @@ interface DashboardState {
   toggleCountyNames: boolean,
   toggleHover: boolean,
   geoControlRef?: RefObject<mapboxgl.GeolocateControl>
+  toggleTravelMode: boolean,
+  currCounty?: CountyFeature
 
   toggleSelect: boolean
   selected: number[]
@@ -97,6 +99,7 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
       stateCount: null,
       toggleSelect: false,
       toggleHover: false,
+      toggleTravelMode: false,
       selected: [],
       geoControlRef: React.createRef(),
       mapRef: React.createRef(),
@@ -342,6 +345,10 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
     this.setState({ drawerOpen })
   };
 
+  toggleTravelMode = () => {
+    this.setState({toggleTravelMode: !this.state.toggleTravelMode})
+  }
+
   render() {
     return (
       <Box>
@@ -411,8 +418,8 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
               {this.state.toggleHover ? "Hide Info" : "Show Info"}
             </Button>
 
-            <Button variant='soft'>
-              {this.state.toggleHover ? "Hide Info" : "Travel Mode"}
+            <Button variant='soft' onClick={() => this.toggleTravelMode()}>
+            {this.state.toggleTravelMode ? "End Travel Mode" : "Travel Mode"}
             </Button>
           </>}
 
@@ -476,6 +483,7 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
           <Divider sx={{ my: 1 }}></Divider>
           <Typography level='body-sm'>Number of Counties: {this.state.countyCount}</Typography>
           <Typography level='body-sm'>Number of States: {this.state.stateCount}</Typography>
+          <Typography level='body-sm'>Curr County: {this.state.currCounty?.properties.name}</Typography>
 
           {/* {this.context ?
             <Typography>{this.state.geoControlRef.}, {this.context.coords.longitude}</Typography>
@@ -548,7 +556,17 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
             ref={this.state.geoControlRef}
             // ref={}
             onGeolocate={(e) => {
-              this.state.mapRef?.current?.flyTo({ zoom: this.state.view.zoom })
+              if (this.state.toggleTravelMode) {
+                console.log(e.coords);
+                const point: [number, number] = [e.coords.longitude, e.coords.latitude]
+                const features = this.state.mapRef?.current?.queryRenderedFeatures(point, {layers: ['base-counties-ids']})
+                
+                if (features?.length) {
+                  this.setState({currCounty: features[0] as CountyFeature})
+                }
+              }
+              
+              // this.state.mapRef?.current?.flyTo({ zoom: this.state.view.zoom })
 
             }}
             fitBoundsOptions={{ maxZoom: 12 }}
