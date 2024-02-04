@@ -581,7 +581,7 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
 
             }}
             fitBoundsOptions={{ maxZoom: 12 }}
-            position='top-right'
+            position='bottom-right'
             positionOptions={{
               enableHighAccuracy: false,
               maximumAge: Infinity
