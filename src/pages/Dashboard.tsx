@@ -61,6 +61,7 @@ interface DashboardState {
   geoControlRef?: RefObject<mapboxgl.GeolocateControl>
   toggleTravelMode: boolean,
   currCounty?: CountyFeature
+  geolocateEvent?: string
 
   toggleSelect: boolean
   selected: number[]
@@ -483,7 +484,9 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
           <Divider sx={{ my: 1 }}></Divider>
           <Typography level='body-sm'>Number of Counties: {this.state.countyCount}</Typography>
           <Typography level='body-sm'>Number of States: {this.state.stateCount}</Typography>
-          <Typography level='body-sm'>Curr County: {this.state.currCounty?.properties.name}</Typography>
+          <Typography level='body-sm'>Curr County name: {this.state.currCounty?.properties.name}</Typography>
+          <Typography level='body-sm'>Curr County: {JSON.stringify(this.state.currCounty)}</Typography>
+          <Typography level='body-sm'>Event info: {JSON.stringify(this.state.geolocateEvent)}</Typography>
 
           {/* {this.context ?
             <Typography>{this.state.geoControlRef.}, {this.context.coords.longitude}</Typography>
@@ -556,6 +559,7 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
             ref={this.state.geoControlRef}
             // ref={}
             onGeolocate={(e) => {
+              this.setState({geolocateEvent: JSON.stringify(e)})
               console.log(JSON.stringify(e));
               console.log(e)
               
