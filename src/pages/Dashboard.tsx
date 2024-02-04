@@ -99,7 +99,7 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
       stateCount: null,
       toggleSelect: false,
       toggleHover: false,
-      toggleTravelMode: false,
+      toggleTravelMode: true,
       selected: [],
       geoControlRef: React.createRef(),
       mapRef: React.createRef(),
@@ -556,10 +556,17 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
             ref={this.state.geoControlRef}
             // ref={}
             onGeolocate={(e) => {
+              console.log(e);
+              alert(JSON.stringify(e))
+              
               if (this.state.toggleTravelMode) {
                 console.log(e.coords);
                 const point: [number, number] = [e.coords.longitude, e.coords.latitude]
                 const features = this.state.mapRef?.current?.queryRenderedFeatures(point, {layers: ['base-counties-ids']})
+
+                console.log(features);
+                alert(JSON.stringify(features))
+                
                 
                 if (features?.length) {
                   this.setState({currCounty: features[0] as CountyFeature})
