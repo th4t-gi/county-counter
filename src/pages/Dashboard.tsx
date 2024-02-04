@@ -556,8 +556,8 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
             ref={this.state.geoControlRef}
             // ref={}
             onGeolocate={(e) => {
-              console.log(e);
-              alert(JSON.stringify(e))
+              console.log(JSON.stringify(e));
+              console.log(e)
               
               if (this.state.toggleTravelMode) {
                 console.log(e.coords);
@@ -565,7 +565,7 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
                 const features = this.state.mapRef?.current?.queryRenderedFeatures(point, {layers: ['base-counties-ids']})
 
                 console.log(features);
-                alert(JSON.stringify(features))
+                console.log(JSON.stringify(features));
                 
                 
                 if (features?.length) {
