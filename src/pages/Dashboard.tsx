@@ -349,6 +349,8 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
 
   toggleTravelMode = () => {
     this.setState({toggleTravelMode: !this.state.toggleTravelMode})
+  }
+
   geolocate = (e: GeolocateResultEvent) => {
     console.log("geolocating")
     this.setState({geolocateEvent: JSON.stringify(e.coords)})
