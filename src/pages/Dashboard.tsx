@@ -1,6 +1,6 @@
 import React, { Component, RefObject } from 'react';
 import { NavigateFunction, useNavigate } from 'react-router-dom';
-import { GeolocateControl, Layer, MapRef, Popup } from 'react-map-gl';
+import { GeolocateControl, GeolocateResultEvent, Layer, MapRef, Popup } from 'react-map-gl';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { signOut, User } from 'firebase/auth';
 import { deleteDoc, doc, setDoc, } from 'firebase/firestore';
@@ -349,6 +349,27 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
 
   toggleTravelMode = () => {
     this.setState({toggleTravelMode: !this.state.toggleTravelMode})
+  geolocate = (e: GeolocateResultEvent) => {
+    console.log("geolocating")
+    this.setState({geolocateEvent: JSON.stringify(e.coords)})
+    console.log("event:", e)
+    
+    if (this.state.toggleTravelMode) {
+      console.log(e.coords);
+      console.log("its travel time")
+      const point: [number, number] = [e.coords.longitude, e.coords.latitude]
+      const features = this.state.mapRef?.current?.queryRenderedFeatures(point, {layers: ['base-counties-ids']})
+
+      console.log("features:", JSON.stringify(features));
+      
+      
+      if (features?.length) {
+        this.setState({currCounty: features[0] as CountyFeature})
+      }
+    }
+    
+    // this.state.mapRef?.current?.flyTo({ zoom: this.state.view.zoom })
+
   }
 
   render() {
@@ -557,29 +578,7 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
           <Layer type="symbol" id='county-labels' layout={{ visibility: (this.state.toggleCountyNames ? "visible" : "none") }} />
           <GeolocateControl
             ref={this.state.geoControlRef}
-            onGeolocate={(e) => {
-              console.log("geolocating")
-              this.setState({geolocateEvent: JSON.stringify(e)})
-              alert(JSON.stringify(e));
-              console.log(e)
-              
-              if (this.state.toggleTravelMode) {
-                console.log(e.coords);
-                const point: [number, number] = [e.coords.longitude, e.coords.latitude]
-                const features = this.state.mapRef?.current?.queryRenderedFeatures(point, {layers: ['base-counties-ids']})
-
-                console.log(features);
-                alert(JSON.stringify(features));
-                
-                
-                if (features?.length) {
-                  this.setState({currCounty: features[0] as CountyFeature})
-                }
-              }
-              
-              // this.state.mapRef?.current?.flyTo({ zoom: this.state.view.zoom })
-
-            }}
+            onGeolocate={this.geolocate}
             fitBoundsOptions={{ maxZoom: 12 }}
             position='bottom-right'
             positionOptions={{
