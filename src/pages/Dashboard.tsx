@@ -6,20 +6,26 @@ import { signOut, User } from 'firebase/auth';
 import { deleteDoc, doc, setDoc, } from 'firebase/firestore';
 import { FillLayer, MapLayerMouseEvent } from 'mapbox-gl';
 
-import { Button, Select, Stack, Option, Box, IconButton, Drawer, Divider, List, ListItem, ListItemButton, Avatar, Dropdown, Menu, MenuItem, MenuButton, ModalClose, DialogTitle, Typography, Snackbar, ButtonGroup, } from '@mui/joy';
-import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
+import { Button, Select, Stack, Option, Box, IconButton, Drawer, Divider, List, ListItem, ListItemButton, Avatar, Dropdown, Menu, MenuItem, MenuButton, ModalClose, DialogTitle, Typography, Snackbar, ButtonGroup, Chip, Switch, RadioGroup, Radio, CssVarsProvider, LinearProgress, FormControl, FormHelperText, FormLabel, Input } from '@mui/joy';
+
+
+import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
 
 import { County, CountyFeature, CountyObject, SortOptions, Visit, sortOptions } from '../resources/utils';
 import { auth, db, getCounties } from '../resources/firebase';
 import { getStyle, selectedStyle } from '../resources/map-style';
 
 import { isEqual, isEmpty } from 'lodash'
+import { saveAs } from 'file-saver'
+
+import * as states from '../resources/states.json'
 
 // @ts-ignore
 import mapboxgl from "mapbox-gl";
 import { DetailPanel } from './components/DetailPanel';
 import { InteractiveMap } from './components/InteractiveMap';
-import { Close, Delete } from '@mui/icons-material';
+import { Close, Delete, MoreVert } from '@mui/icons-material';
+import SelectBar from './components/SelectBar';
 // @ts-ignore
 // eslint-disable-next-line import/no-webpack-loader-syntax
 mapboxgl.workerClass =
@@ -50,7 +56,6 @@ interface DashboardState {
     zoom: number,
   },
   highlightedStyle: FillLayer,
-  drawerOpen: boolean
   snackbarOpen: boolean
   countyCount: number | null,
   stateCount: number | null,
@@ -59,15 +64,15 @@ interface DashboardState {
   toggleCountyNames: boolean,
   toggleHover: boolean,
   geoControlRef?: RefObject<mapboxgl.GeolocateControl>
-  toggleTravelMode: boolean,
+  travelModeEnabled: boolean,
   currCounty?: CountyFeature
-  geolocateEvent?: string
 
   toggleSelect: boolean
   selected: number[]
   lastModified?: CountyFeature
 
   hoverInfo: HoverInfo | null
+  geoControlTracking: boolean
 }
 
 interface HoverInfo {
@@ -78,6 +83,7 @@ interface HoverInfo {
 
 class Dashboard extends Component<DashboardProps, DashboardState> {
   private accessToken = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
+  private statesObj: { [key: string]: { state: string, abbreviation: string } } = states
 
   constructor(props: DashboardProps) {
     super(props)
@@ -94,20 +100,19 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
         zoom: 4,
       },
       highlightedStyle: getStyle(sort),
-      drawerOpen: false,
       snackbarOpen: false,
       countyCount: null,
       stateCount: null,
       toggleSelect: false,
       toggleHover: false,
-      toggleTravelMode: true,
-      geolocateEvent: "hi",
+      travelModeEnabled: false,
       selected: [],
       geoControlRef: React.createRef(),
       mapRef: React.createRef(),
 
       hoverInfo: null,
       click: 'nothing',
+      geoControlTracking: false
     }
 
   }
@@ -159,6 +164,15 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
 
     }
 
+    if (this.state.travelModeEnabled && this.state.currCounty && prevState.currCounty && (this.state.currCounty?.id != prevState.currCounty?.id)) {
+      console.log('we got a new county!');
+      if (!this.state.geoControlTracking) {
+        this.state.geoControlRef?.current?.trigger()
+      }
+
+      this.addVisit(this.state.currCounty, { nature: 'driven' })
+    }
+
   }
 
   setClickState = (str: string) => {
@@ -195,14 +209,15 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
     })
   }
 
-  addVisit = (feature: CountyFeature) => {
+  addVisit = (feature: CountyFeature, options?: Partial<Visit>) => {
     const id = feature.id
     let c: County | undefined = this.state.counties[id]
 
     const newVisit: Visit = {
       trip: null,
       nature: 'visited',
-      timestamp: new Date()
+      timestamp: new Date(),
+      ...options
     }
 
     if (!c) {
@@ -215,6 +230,22 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
     } else {
       this.setVisits(id, [newVisit, ...c.visits])
     }
+  }
+
+  addVisits = (ids: number[]) => {
+    console.log(ids);
+
+    ids.forEach(id => {
+      const features = this.state.mapRef?.current?.querySourceFeatures("composite", {
+        sourceLayer: 'base-counties-ids',
+        filter: ["==", ['id'], id]
+      })
+
+      if (features?.length) {
+        console.log(id, features[0]);
+        this.addVisit(features[0] as CountyFeature)
+      }
+    })
   }
 
   editVisit = (id: number) => (index: number, visit: Partial<Visit>) => {
@@ -265,11 +296,12 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
     // if (this.longTimer) clearTimeout(this.longTimer)
     // this.longTimer = null
     this.setState({ view: e.viewState });
+
   };
 
   onSingleClick = (feature: CountyFeature) => {
     // this.setClickState("single click")
-    console.log('single click', feature);
+    // console.log('single click', feature);
 
 
     if (this.state.toggleSelect) {
@@ -286,6 +318,7 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
         this.setState({ snackbarOpen: true })
         // this.setFocused(feature)
       }
+
     }
   }
 
@@ -312,9 +345,11 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
   onMouseMove = (e: MapLayerMouseEvent) => {
     const county: CountyFeature | undefined = e.features && e.features[0] as CountyFeature
 
-    if (this.state.toggleSelect && e.originalEvent?.shiftKey && e.originalEvent.buttons && county) {
+    if (e.originalEvent?.metaKey && e.originalEvent.buttons && county) {
+      this.setState({ toggleSelect: true })
       this.addSelected(county.id)
     } else {
+
 
       this.setState({
         hoverInfo: {
@@ -326,88 +361,65 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
     }
   }
 
+  onExportClick = () => {
 
-  private logout = () => {
+    this.setState({
+      view: {
+        longitude: -101,
+        latitude: 38,
+        zoom: 3.5
+      }
+    })
+
+    setTimeout(() => {
+      this.state.mapRef?.current?.getCanvas().toBlob((blob) => {
+        const name = "export-" + new Date().toLocaleDateString() + ".png"
+        if (blob) saveAs(blob, name);
+      })
+    }, 1000);
+
+
+  }
+
+  private logout = (path?: string) => {
     signOut(auth)
       .then(() => {
-        this.props.navigate('/');
+        this.props.navigate(path || '/');
       })
       .catch(console.error);
   };
 
-  toggleDrawer = (drawerOpen: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => {
-    if (
-      event.type === 'keydown' &&
-      ((event as React.KeyboardEvent).key === 'Tab' ||
-        (event as React.KeyboardEvent).key === 'Shift')
-    ) {
-      return;
+  toggleTravelMode = () => {
+    if (!this.state.travelModeEnabled) {
+      if (this.state.geoControlTracking) {
+        this.state.geoControlRef?.current?.trigger()
+      }
+
+      this.state.geoControlRef?.current?.trigger()
     }
 
-    this.setState({ drawerOpen })
-  };
-
-  toggleTravelMode = () => {
-    this.setState({toggleTravelMode: !this.state.toggleTravelMode})
+    // this.state.geoControlRef?.currentx
+    this.setState({ travelModeEnabled: !this.state.travelModeEnabled })
   }
 
-  geolocate = (e: GeolocateResultEvent) => {
-    console.log("geolocating")
-    this.setState({geolocateEvent: JSON.stringify(e.coords)})
-    console.log("event:", e)
-    
-    if (this.state.toggleTravelMode) {
-      console.log(e.coords);
-      console.log("its travel time")
-      const point: [number, number] = [e.coords.longitude, e.coords.latitude]
-      const features = this.state.mapRef?.current?.queryRenderedFeatures(point, {layers: ['base-counties-ids']})
 
-      console.log("features:", JSON.stringify(features));
-      
-      
+  onGeolocate = (e: GeolocateResultEvent) => {
+
+    if (this.state.travelModeEnabled) {
+      const coordinate: [number, number] = [e.coords.longitude, e.coords.latitude]
+      const point = this.state.mapRef?.current?.project(coordinate);
+
+      const features = this.state.mapRef?.current?.queryRenderedFeatures(point, { layers: ['county-fill', 'county-line'] })
+
       if (features?.length) {
-        this.setState({currCounty: features[0] as CountyFeature})
+        this.setState({ currCounty: features[0] as CountyFeature })
       }
     }
-    
-    // this.state.mapRef?.current?.flyTo({ zoom: this.state.view.zoom })
-
   }
 
   render() {
     return (
       <Box>
-
-        {/* LEFT DRAWER */}
-        <Drawer size='sm' open={this.state.drawerOpen} onClose={this.toggleDrawer(false)} hideBackdrop={true}>
-          <Box
-            role="presentation"
-            onClick={this.toggleDrawer(false)}
-            // onKeyDown={this.toggleDrawer(false)}
-            p={1}
-          >
-            <ModalClose size='lg' />
-            <DialogTitle >
-              <Avatar onClick={() => this.props.navigate('/')} size='lg' variant='plain' src="/logo700.png" sx={{ borderRadius: 0 }} />
-            </DialogTitle>
-            <List>
-              {['Trips', 'List of Counties', 'Send email', 'Drafts'].map((text) => (
-                <ListItem key={text}>
-                  <ListItemButton>{text}</ListItemButton>
-                </ListItem>
-              ))}
-            </List>
-            {/* <Divider />
-            <List>
-              {['All mail', 'Trash', 'Spam'].map((text) => (
-                <ListItem key={text}>
-                  <ListItemButton>{text}</ListItemButton>
-                </ListItem>
-              ))}
-            </List> */}
-          </Box>
-        </Drawer>
-
         {/* TOP MENU */}
         <Stack bgcolor={'white'} className='shadow-lg' p={1} direction='row' spacing={1}>
           <Avatar
@@ -417,55 +429,75 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
             src="/logo700.png"
             sx={{ borderRadius: 0 }}
           />
-          {/* <IconButton size="sm" onClick={this.toggleDrawer(true)}>
-              <MenuRoundedIcon></MenuRoundedIcon>
-            </IconButton> */}
+
+          <Dropdown>
+            <MenuButton startDecorator={<TuneRoundedIcon />}>View Options</MenuButton>
+            <Menu disablePortal placement='bottom-start' sx={{ p: 2, maxWidth: 200 }}>
+              <Stack spacing={1}>
+                <Typography level='body-xs' component="label"
+                  startDecorator={
+                    <Switch checked={this.state.toggleCountyNames}
+                      sx={{ mr: 1 }}
+                      onClick={() => this.setState({ toggleCountyNames: !this.state.toggleCountyNames })} />
+                  }>
+                  Show County Names
+                </Typography>
+
+                <Typography level='body-xs' component="label"
+                  startDecorator={
+                    <Switch checked={this.state.toggleHover}
+                      sx={{ mr: 1 }}
+                      onClick={() => this.setState({ toggleHover: !this.state.toggleHover })} />
+                  }>
+                  Show Information on Hover
+                </Typography>
+
+                <MenuItem disabled>
+                  <Typography>Color by</Typography>
+                </MenuItem>
+                <RadioGroup
+                  value={this.state.sort}
+                  placeholder="Sort by"
+                  onChange={(e) => {
+                    const sort = e.target.value as SortOptions
+                    if (sort) this.setState({ sort })
+                  }}
+                >
+                  {Object.keys(sortOptions).map((option, index) => (
+                    <Radio size='sm' sx={{ mx: 1, borderRadius: 5 }} key={index} value={option} label={sortOptions[option as SortOptions]} />
+                  ))}
+                </RadioGroup>
+              </Stack>
+
+            </Menu>
+          </Dropdown>
 
           {/* TODO: PUT THESE TWO ELEMENTS IN A "OPTIONS" PopOver. Hide/Show Names as a Toggle and Sort as Radio Buttons? */}
           {!this.state.toggleSelect && <>
-            <Select
-              defaultValue={this.state.sort}
-              placeholder="Sort by"
-              onChange={(e, newValue) => {
-                if (newValue) this.setState({ sort: newValue })
-              }}
-            >
-              {Object.keys(sortOptions).map((option, index) => (
-                <Option sx={{ mx: 1, borderRadius: 5 }} key={index} value={option}>{sortOptions[option as SortOptions]}</Option>
-              ))}
-            </Select>
 
-            <Button variant='soft' onClick={() => { this.setState({ toggleCountyNames: !this.state.toggleCountyNames }) }}>
+            {/* <Button variant='soft' onClick={() => this.setState({ toggleCountyNames: !this.state.toggleCountyNames })}>
               {this.state.toggleCountyNames ? "Hide Names" : "Show Names"}
             </Button>
 
             <Button variant='soft' onClick={() => { this.setState({ toggleHover: !this.state.toggleHover }) }}>
               {this.state.toggleHover ? "Hide Info" : "Show Info"}
-            </Button>
+            </Button> */}
 
-            <Button variant='soft' onClick={() => this.toggleTravelMode()}>
-            {this.state.toggleTravelMode ? "End Travel Mode" : "Travel Mode"}
+            <Button variant='soft' onClick={this.toggleTravelMode}>
+              {this.state.travelModeEnabled ? "End Travel Mode" : "Travel Mode"}
             </Button>
+            <Button variant='soft' onClick={this.onExportClick}>Export as Image</Button>
+
+            <Button variant='soft' onClick={() => { this.setState({ toggleSelect: true }) }}>Select</Button>
           </>}
 
 
-          {this.state.toggleSelect ?
-            <ButtonGroup variant='plain' spacing={2} color='primary'>
-              <IconButton onClick={() => this.setState({ toggleSelect: false })}>
-                <Close />
-              </IconButton>
-              <Typography level='body-sm' fontWeight="lg" color='primary' my='auto'>
-                {this.state.selected.length} Selected
-              </Typography>
-              <Button>Edit Trip</Button>
-              <Button>Add Trip</Button>
-              {/* <Button>{this.state.selected.length > 1 ? "" }</Button> */}
-              <IconButton>
-                <Delete />
-              </IconButton>
-            </ButtonGroup>
-            : <Button variant='soft' onClick={() => { this.setState({ toggleSelect: true }) }}>Select</Button>
-          }
+          {this.state.toggleSelect && <SelectBar
+            selected={this.state.selected}
+            setToggleSelect={(toggleSelect) => this.setState({ toggleSelect })}
+            counties={this.state.counties}
+            addVisits={this.addVisits}
+          />}
 
           {/* Spacer */}
           <Box flexGrow={1}></Box>
@@ -489,7 +521,7 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
                 Settings
               </MenuItem>
               <Divider></Divider>
-              <MenuItem onClick={this.logout}>
+              <MenuItem onClick={() => this.logout()}>
                 Log Out
               </MenuItem>
             </Menu>
@@ -508,9 +540,6 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
           <Divider sx={{ my: 1 }}></Divider>
           <Typography level='body-sm'>Number of Counties: {this.state.countyCount}</Typography>
           <Typography level='body-sm'>Number of States: {this.state.stateCount}</Typography>
-          <Typography level='body-sm'>Curr County name: {this.state.currCounty?.properties.name}</Typography>
-          <Typography level='body-sm'>Curr County: {JSON.stringify(this.state.currCounty)}</Typography>
-          <Typography level='body-sm'>Event info: {this.state.geolocateEvent}</Typography>
           {/* {this.context ?
             <Typography>{this.state.geoControlRef.}, {this.context.coords.longitude}</Typography>
             : <Typography>Loading...</Typography>
@@ -551,6 +580,81 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
           Added Visit
         </Snackbar>
 
+        {/* <CssVarsProvider defaultMode="system"> */}
+        <Snackbar
+          open={this.state.travelModeEnabled}
+          sx={(theme) => ({
+            [theme.breakpoints.up('xs')]: {
+              backgroundColor: 'neutral.800',
+              width: 380,
+              height: 200,
+              border: 'none',
+              pt: 1,
+              pb: 2,
+            },
+            [theme.breakpoints.only('xs')]: {
+              top: 'unset',
+              bottom: 0,
+              // left: 0,
+              // right: 0,
+              borderBottomLeftRadius: 0,
+              borderBottomRightRadius: 0,
+              // transform: 'none',
+              width: '100vw',
+            }
+          })}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          size='lg'
+        >
+
+          <Stack width='100%' height='100%' alignItems='center'>
+            {/* <LinearProgress sx={{ width: '100%' }} variant="plain" /> */}
+
+            <Typography level='h2' sx={{ color: 'neutral.100' }}>
+              Travel Mode
+            </Typography>
+            <Typography level='title-lg' sx={{ color: 'neutral.100', pb: 2}} >
+              Currently in 
+              <Typography sx={{textDecoration: 'underline', pl: 1}}>{this.state.currCounty?.properties.name} {this.state.currCounty?.properties.lsad}</Typography>, {this.state.currCounty && this.statesObj[this.state.currCounty.properties.state].abbreviation}
+            </Typography>
+
+            <Stack direction={'row'} alignItems={'center'} spacing={1}>
+              <Typography level='body-lg' sx={{ color: 'neutral.100' }}>Trip: </Typography>
+              <Input placeholder="Trip Name" />
+            </Stack>
+
+            {/* <Typography level='title-lg' sx={{ color: 'neutral.100', pb: 2}} >
+              Entered at some time
+            </Typography> */}
+
+            {/* TRIP NAME INPUT, COORDINATES, COUNTY SEAT, POPULATION, TIME ENTERED, TIMES VISITED */}
+
+          </Stack>
+
+
+        </Snackbar>
+        {/* </CssVarsProvider> */}
+
+
+
+
+        {/* <Drawer
+          anchor="bottom"
+          invertedColors
+          size='sm'
+          hideBackdrop
+          disableEnforceFocus
+          slotProps={{
+            root: {
+              sx: {
+                zIndex: 5
+              }
+            },
+          }}
+        >
+          test
+        </Drawer> */}
+
         <InteractiveMap
           ref={this.state.mapRef}
           counties={this.state.counties}
@@ -564,30 +668,38 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
 
           onMove={this.onMove}
           onDragStart={(e) => {
-            if (this.state.toggleSelect && e.originalEvent?.shiftKey) e.target.dragPan.disable()
+            if (e.originalEvent?.metaKey)
+              e.target.dragPan.disable()
           }}
           onDragEnd={(e) => e.target.dragPan.enable()}
           onMouseMove={this.onMouseMove}
           boxZoom={!this.state.toggleSelect}
 
           onLoad={(e) => {
-            this.state.geoControlRef?.current?.trigger()
+            // this.state.geoControlRef?.current?.trigger()
+            this.toggleTravelMode()
           }}
           setClick={this.setClickState}
+          preserveDrawingBuffer
         >
           <Layer {...selectedStyle(this.state.selected)} />
           <Layer beforeId="aeroway-polygon" {...this.state.highlightedStyle} />
           <Layer type="symbol" id='county-labels' layout={{ visibility: (this.state.toggleCountyNames ? "visible" : "none") }} />
           <GeolocateControl
             ref={this.state.geoControlRef}
-            onGeolocate={this.geolocate}
+            onGeolocate={this.onGeolocate}
             fitBoundsOptions={{ maxZoom: 12 }}
-            position='bottom-right'
+            position={this.state.travelModeEnabled ? 'bottom-left' : 'bottom-right'}
             positionOptions={{
               enableHighAccuracy: false,
               maximumAge: Infinity
             }}
             trackUserLocation
+            onTrackUserLocationStart={(e) => this.setState({ geoControlTracking: true })}
+            onTrackUserLocationEnd={(e) => {
+              this.setState({ geoControlTracking: false })
+            }}
+            onOutOfMaxBounds={(e) => console.log('uh oh!')}
           />
           {this.state.hoverInfo?.county && this.state.view.zoom > 3 && this.state.toggleHover &&
             <Popup
@@ -597,7 +709,24 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
               closeButton={false}
               closeOnClick={false}
             >
-              {this.state.hoverInfo.county.properties.name}
+              <Typography level='title-sm'>
+                {this.state.hoverInfo.county.properties.name} {this.state.hoverInfo.county.properties.lsad}
+              </Typography>
+              {this.state.hoverInfo.county.state.visited &&
+                <Box pl={1}>
+                  <Typography>
+                    Visited {this.state.hoverInfo.county.state.count == 1 ? "once" :
+                      this.state.hoverInfo.county.state.count.toString() + " times"}
+                  </Typography>
+                  <Typography>
+                    Trips:
+                    <Chip>Trip 1</Chip>
+                  </Typography>
+                  <p>
+                    {JSON.stringify(this.state.hoverInfo.county.state)}
+                  </p>
+                </Box>
+              }
             </Popup>}
         </InteractiveMap>
 

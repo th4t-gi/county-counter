@@ -48,7 +48,7 @@ const Register: FC<RegisterProps> = () => {
 
   const onSubmit = ({ username, email, password, hometown }: FormState) => {
     const persistence = remember ? browserLocalPersistence : browserSessionPersistence
-    
+
     setPersistence(auth, persistence).then(() => {
       signUpWithEmailAndPassword(email, password).then(uid => {
         if (uid) {
@@ -133,14 +133,14 @@ const Register: FC<RegisterProps> = () => {
                 getOptionKey={option => option.id}
 
                 open={hometownOpen}
-                onClose={() => setHometownOpen(false) }
+                onClose={() => setHometownOpen(false)}
 
                 {...register("hometown", {
                   required: "Please select a hometown",
                   onBlur: (e) => trigger('hometown')
                 })}
 
-                onChange={(e, option) => {if (option) setValue('hometown', option.city)}}
+                onChange={(e, option) => { if (option) setValue('hometown', option.city) }}
               />
             </FormField>
 
@@ -191,7 +191,7 @@ const Register: FC<RegisterProps> = () => {
         </form>
       </Card>
 
-      <StaticMap coords={{ lat: 39, long: -108, zoom: 5 }} className='fixed left-0 top-0 -z-10 h-full w-full object-cover opacity-40' />
+      <StaticMap random mask live className='fixed left-0 top-0 -z-10 object-cover' />
 
     </Box>
   )

@@ -6,20 +6,22 @@ import FormLabel from '@mui/joy/FormLabel'
 
 import { InfoOutlined } from '@mui/icons-material'
 import { InputProps } from '@mui/joy/Input'
+import { SxProps } from '@mui/joy/styles/types'
 
 interface FormFieldProps {
+  label: string
   children: ReactElement<InputProps>
   error?: {
     message?: string
   }
-  label: string
+  sx?: SxProps
 }
 
 const FormField: FC<FormFieldProps> = (props) => {
-  const {children, label, error} = props
+  const {children, label, error, sx} = props
 
   return (
-    <FormControl error={!!error}>
+    <FormControl sx={sx} error={!!error}>
       <FormLabel >{label}</FormLabel>
       {children}
       {error && <FormHelperText>

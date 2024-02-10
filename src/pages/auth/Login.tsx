@@ -1,13 +1,13 @@
 import { FC, useEffect, useState } from 'react';
 import { useForm } from "react-hook-form";
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { useNavigate } from 'react-router-dom';
+import { redirect, useNavigate } from 'react-router-dom';
 
 import { FirebaseError } from 'firebase/app';
-import { signInWithEmailAndPassword, setPersistence, browserLocalPersistence, browserSessionPersistence } from 'firebase/auth';
+import { signInWithEmailAndPassword, setPersistence, browserLocalPersistence, browserSessionPersistence, signOut } from 'firebase/auth';
 
 import { useMediaQuery } from '@mui/material'
-import { useTheme } from '@mui/joy';
+import { Alert, DialogActions, DialogContent, DialogTitle, Divider, Modal, ModalDialog, Snackbar, useTheme } from '@mui/joy';
 import Box from '@mui/joy/Box'
 import Button from '@mui/joy/Button'
 import Checkbox from '@mui/joy/Checkbox'
@@ -18,10 +18,12 @@ import Link from '@mui/joy/Link'
 import IconButton from '@mui/joy/IconButton'
 import Card from '@mui/joy/Card'
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
+import LaunchIcon from '@mui/icons-material/Launch';
 
 import StaticMap from '../utils/StaticMap';
-import { auth } from '../../resources/firebase';
+import { auth, db, getUserDoc } from '../../resources/firebase';
 import FormField from './FormField';
+import { getDoc } from '@firebase/firestore';
 
 type FormState = {
   email: string
@@ -34,11 +36,14 @@ const Login: FC<LoginProps> = () => {
   const { handleSubmit, register, formState: { errors }, setError, trigger } = useForm<FormState>();
   const navigate = useNavigate()
   const [user, loading, error] = useAuthState(auth)
+  const [errorOpen, setErrorOpen] = useState(false)
 
   const theme = useTheme()
   const isSmall = useMediaQuery(theme.breakpoints.down('sm'));
 
   const [remember, setRemember] = useState(false)
+
+  const oppositeEnv = process.env.REACT_APP_ENV == 'production' ? 'development' : 'production'
 
   useEffect(() => {
     if (loading) {
@@ -46,7 +51,23 @@ const Login: FC<LoginProps> = () => {
       return;
     }
 
-    if (user) navigate("/dashboard");
+    if (user) {
+      const userRef = getUserDoc(db, user.uid)
+
+      getDoc(userRef).then(v => {
+        if (v.exists()) {
+          navigate("/dashboard");
+        } else {
+          console.log(user.uid, "we don't have a user!");
+
+          signOut(auth)
+            .then(() => {
+              setErrorOpen(true)
+            })
+            .catch(console.error);
+        }
+      })
+    }
   }, [user, loading]);
 
   const onSubmit = ({ email, password }: FormState) => {
@@ -147,7 +168,46 @@ const Login: FC<LoginProps> = () => {
         </form>
       </Card>
 
-      <StaticMap coords={{ lat: 39, long: -108, zoom: 5 }} className='fixed left-0 top-0 -z-10 h-full w-full object-cover opacity-40' />
+      <Modal
+        open={errorOpen}
+        onClose={() => setErrorOpen(false)}
+      >
+        <ModalDialog color="danger" layout="center" invertedColors variant='soft' role="alertdialog">
+          <DialogTitle>
+            Uh Oh!
+          </DialogTitle>
+          {process.env.REACT_APP_ENV == 'production' ?
+            <DialogContent>
+              It looks like you are trying to log into the County Counter app with a development account.
+            </DialogContent> :
+            <DialogContent>
+              It looks like you are trying to log into countycounter-dev.web.app instead of countycounter.com.
+            </DialogContent>
+          }
+
+          <DialogActions>
+            {process.env.REACT_APP_ENV == 'production' ?
+              <Link href="http://countycounter-dev.web.app">
+                <Button variant="solid" color="primary" endDecorator={<LaunchIcon />} href='/test'>
+                  Take me to the development app
+                </Button>
+              </Link>
+              :
+              <Link href="http://county-counting.web.app">
+                <Button variant="solid" color="primary" endDecorator={<LaunchIcon />}>
+                  Take me to County Counter
+                </Button>
+              </Link>
+            }
+
+            <Button variant="outlined" color="primary" onClick={() => navigate("/register")}>
+              Create a {process.env.REACT_APP_ENV == 'production' ? "County Counter" : "dev"} account
+            </Button>
+          </DialogActions>
+        </ModalDialog>
+      </Modal>
+
+      <StaticMap random mask live className='fixed left-0 top-0 -z-10 object-cover' />
 
     </Box>
   )

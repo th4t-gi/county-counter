@@ -33,6 +33,9 @@ export const InteractiveMap: FC<InteractiveMapProps> = forwardRef((props, ref) =
   const mapRef = useRef<MapRef>(null)
   const prevFocusedRef = useRef<CountyFeature | undefined>(focused)
 
+  const styleId = process.env.REACT_APP_ENV === 'production' ? 'clo0th5kf00an01p60t1a24s2' : 'clrih8y4l006f01r7f899d6ok'
+
+
 
   const onLoad = (e: MapboxEvent) => {
 
@@ -139,7 +142,7 @@ export const InteractiveMap: FC<InteractiveMapProps> = forwardRef((props, ref) =
       maxPitch={0}
       doubleClickZoom={false}
       interactiveLayerIds={['county-fill']}
-      mapStyle="mapbox://styles/juddlee/clo0th5kf00an01p60t1a24s2"
+      mapStyle={`mapbox://styles/juddlee/${styleId}`}
     >
       {children}
     </Map>

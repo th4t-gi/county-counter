@@ -114,7 +114,7 @@ export type CountyObject = { [key: string]: County }
 
 export interface CountyFeature extends MapboxGeoJSONFeature {
   id: number,
-  state: County,
+  state: CountyFeatureState,
   properties: CountyProperties
 }
 

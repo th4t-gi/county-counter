@@ -21,13 +21,13 @@ const Page404: FC<Page404Props> = () => {
           <Typography lineHeight='110%' fontSize={{sm: 80}} pt={{xs: 4, sm: 1}} level='h1' fontWeight={'bold'} textAlign={'center'}>404 Not Found</Typography>
 
           <Box px={5}>
-          <img width={500} src="./404-illustration.png" />
+          <img width={500} src="/404-illustration.png" />
 
           </Box>
           
 
           <Typography level='title-lg' maxWidth={600} textAlign={'center'} px={3}>
-            Uh oh! Looks like found an unexplored place! Nice Job!
+            Uh oh! Looks like you found an unexplored place! Nice Job!
           </Typography>
         <Button variant='soft' startDecorator={<ArrowBack />} onClick={() => navigate(-1)}>Go Back</Button>
 

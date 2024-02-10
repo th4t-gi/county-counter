@@ -14,6 +14,8 @@ import Page404 from './pages/Page404';
 import DashboardWrapper from './pages/Dashboard';
 import Register from './pages/auth/Register';
 import ProtectedRouteLayout from './pages/auth/ProtectedRouteLayout';
+import Contact from './pages/Contact';
+import Test from './pages/Test';
 
 function App() {
   //TODO: https://mui.com/joy-ui/customization/using-css-variables/ and <CssVarsProvider />
@@ -22,6 +24,8 @@ function App() {
       <Route path="/" element={<Home />} />
       <Route path="/home" element={<Home />} />
       <Route path="/about" element={<About />} />
+      <Route path="/contact" element={<Contact />} />
+      <Route path="/test" element={<Test />} />
 
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
@@ -30,9 +34,10 @@ function App() {
 
       <Route element={<ProtectedRouteLayout />}>
         <Route path="/dashboard" element={<DashboardWrapper />} />
-        
+
       </Route>
     </Routes>
+
   );
 }
 

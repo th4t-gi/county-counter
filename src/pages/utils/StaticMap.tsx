@@ -1,82 +1,110 @@
-import React, { FC, useContext, useEffect, useState } from 'react';
+import React, { CSSProperties, FC, useContext, useEffect, useMemo, useState } from 'react';
+import { useGeolocated } from "react-geolocated";
 
+import { featureCollection, nearestPoint, point } from "@turf/turf"
 
-interface StaticMapProps {
-  coords: {
-    lat: number,
-    long: number,
-    zoom: number
-  }
+import imgCoordsSource from "../../resources/static_coords.json"
+
+import { storage } from '../../resources/firebase';
+import { getDownloadURL, getStorage, ref } from "firebase/storage";
+
+const imgCoords = imgCoordsSource as [number, number][]
+
+interface Coords {
+  lat: number,
+  long: number
+}
+
+interface BaseStaticMapProps {
+  mask?: boolean
+  style?: CSSProperties
   className?: string
 }
 
-
+type StaticMapProps = BaseStaticMapProps &
+  ({
+    live: false
+    random: false
+    defaultCoords: Coords
+  } |
+  {
+    random?: boolean
+    defaultCoords?: Coords
+    live?: boolean
+  })
 
 const StaticMap: FC<StaticMapProps> = (props) => {
   const accessToken = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN
-  let [imgSrc, setImgSrc] = useState("");
 
-  let defaultCoords = {
-    lat: 0,
-    long: 0,
-    zoom: 6
+  const { defaultCoords, mask, live, random } = props
+  let [imgSrc, setImgSrc] = useState('/blank.png');
+
+  const { coords, isGeolocationAvailable, isGeolocationEnabled } =
+    useGeolocated({
+      positionOptions: {
+        enableHighAccuracy: false,
+        maximumAge: Infinity
+      },
+      userDecisionTimeout: 5000,
+    });
+
+  const getImgUrl = (coords: [number, number]) => {
+    const targetPoint = point(coords);
+    const points = featureCollection(imgCoords.map(c => point(c)));
+    const nearest = nearestPoint(targetPoint, points);
+
+    console.log("Nearest", nearest);
+
+    const lat = nearest.geometry.coordinates[1]
+    const long = nearest.geometry.coordinates[0]
+
+    const name = `${lat},${long}-w1280h1280z7.png`
+    const imgRef = ref(storage, 'static_maps_new/' + name);
+
+    getDownloadURL(imgRef).then(setImgSrc)
   }
-
-  const getCurrentPosition = () => {
-    return new Promise<GeolocationPosition> ((resolve, reject) => {
-      navigator.geolocation.getCurrentPosition(resolve, reject)
-    })
-  }
-
-  const getImgUrl = ({lat, long, zoom}: {lat: number, long: number, zoom: number}) => {
-    return './1000x500@2x.png'
-    // return `https://api.mapbox.com/styles/v1/juddlee/clo0th5kf00an01p60t1a24s2/static/${long},${lat},${zoom},0/1000x500?access_token=${accessToken}`
-  }
-
-  // navigator.geolocation.getCurrentPosition(pos => {
-  //   console.log('hi');
-
-  //   let defaultCoords = {
-  //     lat: pos.coords.latitude,
-  //     long: pos.coords.longitude,
-  //     zoom: 6
-  //   }
-
-  //   let url = getImgUrl(props.coords || defaultCoords)
-  //   console.log(url);
-    
-  //   // setImgSrc(url)
-  // })
 
   useEffect(() => {
-    let url = getImgUrl(props.coords)
-    
-    setImgSrc(url)
-    
-    // getCurrentPosition().then(pos => {
-    //   console.log('hi');
-
-    //   let defaultCoords = {
-    //     lat: pos.coords.latitude,
-    //     long: pos.coords.longitude,
-    //     zoom: 6
-    //   }
-
-    //   let url = getImgUrl(props.coords || defaultCoords)
-    //   console.log(url);
-      
-    //   setImgSrc(url)
-    // }).catch(console.error)
-      // const { test } = useContext(GlobalContext)
-
-    
+    if (random) {
+      const i = Math.floor(Math.random() * imgCoords.length)
+      getImgUrl(imgCoords[i])
+    } else if (defaultCoords) {
+      getImgUrl([defaultCoords.long, defaultCoords.lat])
+    }
   }, [])
 
 
-  
+  useEffect(() => {
+
+    if (coords && live) {
+      console.log("got coords\n" + JSON.stringify(coords))
+      getImgUrl([coords.longitude, coords.latitude])
+    }
+
+  }, [coords])
+
+  const imgMask: CSSProperties = {
+    maskImage: "radial-gradient(69.66% 50% at 49.97% 50%, #000 0%, rgba(0, 0, 0, 0.00) 100%)",
+    WebkitMaskImage: "radial-gradient(69.66% 50% at 49.97% 50%, #000 0%, rgba(0, 0, 0, 0.00) 100%)",
+  }
+  const style: CSSProperties = {
+    backgroundImage: `url(${imgSrc})`,
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'center',
+    backgroundSize: 'cover',
+    // position: 'absolute',
+    width: '100%',
+    height: '100%',
+  }
+
+  const imgStyle = mask ? {...style, ...imgMask} : style
+
 
   return (
-    <img className={props.className} src={imgSrc} alt={`County Counter map`}/>
+    <div style={{width: '100vw', height: '100vh', ...props.style}} className={props.className}>
+      <div style={imgStyle}></div>
+      {/* <img {...props.style} src={imgSrc} alt={`Static map centered at ${JSON.stringify(imgCenter)}`} /> */}
+    </div>
   )
 }
 
