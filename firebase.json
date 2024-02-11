@@ -1,8 +1,16 @@
 {
-  "firestore": {
-    "rules": "firestore.rules",
-    "indexes": "firestore.indexes.json"
-  },
+  "firestore": [
+    {
+      "database": "default",
+      "rules": "firestore.default.rules",
+      "indexes": "firestore.indexes.json"
+    },
+    {
+      "database": "countycounter-dev",
+      "rules": "firestore.dev.rules",
+      "indexes": "firestore.indexes.json"
+    }
+  ],
   "hosting": [
     {
       "site": "county-counting",

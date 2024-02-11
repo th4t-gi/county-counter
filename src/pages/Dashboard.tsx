@@ -635,26 +635,6 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
         </Snackbar>
         {/* </CssVarsProvider> */}
 
-
-
-
-        {/* <Drawer
-          anchor="bottom"
-          invertedColors
-          size='sm'
-          hideBackdrop
-          disableEnforceFocus
-          slotProps={{
-            root: {
-              sx: {
-                zIndex: 5
-              }
-            },
-          }}
-        >
-          test
-        </Drawer> */}
-
         <InteractiveMap
           ref={this.state.mapRef}
           counties={this.state.counties}
@@ -676,8 +656,8 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
           boxZoom={!this.state.toggleSelect}
 
           onLoad={(e) => {
-            // this.state.geoControlRef?.current?.trigger()
-            this.toggleTravelMode()
+            this.state.geoControlRef?.current?.trigger()
+            // this.toggleTravelMode()
           }}
           setClick={this.setClickState}
           preserveDrawingBuffer

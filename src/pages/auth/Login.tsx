@@ -66,7 +66,7 @@ const Login: FC<LoginProps> = () => {
             })
             .catch(console.error);
         }
-      })
+      }).catch(console.error)
     }
   }, [user, loading]);
 
