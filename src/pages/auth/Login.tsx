@@ -20,9 +20,9 @@ import Card from '@mui/joy/Card'
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import LaunchIcon from '@mui/icons-material/Launch';
 
-import StaticMap from '../utils/StaticMap';
-import { auth, db, getUserDoc } from '../../resources/firebase';
-import FormField from './FormField';
+import StaticMap from '../../components/StaticMap';
+import { auth, db, getUserDoc } from '../../utils/firebase';
+import FormField from '../../components/FormField';
 import { getDoc } from '@firebase/firestore';
 
 type FormState = {

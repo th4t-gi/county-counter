@@ -5,10 +5,8 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import '@fontsource/roboto';
 
 
-import Map from 'react-map-gl';
 import Home from './pages/Home';
 import About from './pages/About';
-import NavBar from './pages/NavBar';
 import Login from './pages/auth/Login';
 import Page404 from './pages/Page404';
 import DashboardWrapper from './pages/Dashboard';

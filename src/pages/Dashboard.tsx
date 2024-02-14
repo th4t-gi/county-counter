@@ -11,9 +11,9 @@ import { Button, Select, Stack, Option, Box, IconButton, Drawer, Divider, List, 
 
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
 
-import { County, CountyFeature, CountyObject, SortOptions, Visit, sortOptions } from '../resources/utils';
-import { auth, db, getCounties } from '../resources/firebase';
-import { getStyle, selectedStyle } from '../resources/map-style';
+import { County, CountyFeature, CountyObject, SortOptions, Visit, sortOptions } from '../utils/utils';
+import { auth, db, getCounties } from '../utils/firebase';
+import { getStyle, selectedStyle } from '../utils/map-style';
 
 import { isEqual, isEmpty } from 'lodash'
 import { saveAs } from 'file-saver'
@@ -22,10 +22,10 @@ import * as states from '../resources/states.json'
 
 // @ts-ignore
 import mapboxgl from "mapbox-gl";
-import { DetailPanel } from './components/DetailPanel';
-import { InteractiveMap } from './components/InteractiveMap';
+import { DetailPanel } from '../components/DetailPanel';
+import { InteractiveMap } from '../components/InteractiveMap';
 import { Close, Delete, MoreVert } from '@mui/icons-material';
-import SelectBar from './components/SelectBar';
+import SelectBar from '../components/SelectBar';
 // @ts-ignore
 // eslint-disable-next-line import/no-webpack-loader-syntax
 mapboxgl.workerClass =
@@ -613,9 +613,9 @@ class Dashboard extends Component<DashboardProps, DashboardState> {
             <Typography level='h2' sx={{ color: 'neutral.100' }}>
               Travel Mode
             </Typography>
-            <Typography level='title-lg' sx={{ color: 'neutral.100', pb: 2}} >
-              Currently in 
-              <Typography sx={{textDecoration: 'underline', pl: 1}}>{this.state.currCounty?.properties.name} {this.state.currCounty?.properties.lsad}</Typography>, {this.state.currCounty && this.statesObj[this.state.currCounty.properties.state].abbreviation}
+            <Typography level='title-lg' sx={{ color: 'neutral.100', pb: 2 }} >
+              Currently in
+              <Typography sx={{ textDecoration: 'underline', pl: 1 }}>{this.state.currCounty?.properties.name} {this.state.currCounty?.properties.lsad}</Typography>, {this.state.currCounty && this.statesObj[this.state.currCounty.properties.state].abbreviation}
             </Typography>
 
             <Stack direction={'row'} alignItems={'center'} spacing={1}>

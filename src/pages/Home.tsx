@@ -1,12 +1,12 @@
 import { FunctionComponent, useContext, useEffect } from 'react';
-import StaticMap from "./utils/StaticMap";
+import StaticMap from "../components/StaticMap";
 
-import NavBar from './NavBar';
+import NavBar from '../components/NavBar';
 import { useNavigate } from 'react-router-dom';
 import Button from '@mui/joy/Button';
-import { InteractiveMap } from './components/InteractiveMap';
+import { InteractiveMap } from '../components/InteractiveMap';
 import Typography from '@mui/joy/Typography';
-import Footer from './Footer';
+import Footer from '../components/Footer';
 import Box from '@mui/joy/Box';
 import Stack from '@mui/joy/Stack';
 import Card from '@mui/joy/Card';
@@ -61,8 +61,8 @@ const Home: FunctionComponent<HomeProps> = (props) => {
 
 
       <Box height={800}>
-        <Stack width={'100%'} height={'100%'} justifyContent={'center'} p={{xs: 4, sm: 10}} sx={{ position: 'absolute', zIndex: 1 }}>
-          <Card sx={{ maxWidth: 710, maxHeight: '100%', p: {xs: 4, sm: 8} }}>
+        <Stack width={'100%'} height={'100%'} justifyContent={'center'} p={{ xs: 4, sm: 10 }} sx={{ position: 'absolute', zIndex: 1 }}>
+          <Card sx={{ maxWidth: 710, maxHeight: '100%', p: { xs: 4, sm: 8 } }}>
             <Stack spacing={2}>
 
               <Typography level='h1' mb={3}>

@@ -1,22 +1,22 @@
 import React, { CSSProperties, FC, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import NavBar from './NavBar';
+import NavBar from '../components/NavBar';
 import Box from '@mui/joy/Box';
-import Footer from './Footer';
+import Footer from '../components/Footer';
 import Stack from '@mui/joy/Stack';
 import Typography from '@mui/joy/Typography';
 import Button from '@mui/joy/Button';
 import { ArrowBack } from '@mui/icons-material'
 import Link from '@mui/joy/Link';
 import Card from '@mui/joy/Card';
-import FormField from './auth/FormField';
+import FormField from '../components/FormField';
 import Input from '@mui/joy/Input';
 import FormControl from '@mui/joy/FormControl';
 import FormLabel from '@mui/joy/FormLabel';
 
 import { useForm } from "react-hook-form";
 import Textarea from '@mui/joy/Textarea';
-import StaticMap from './utils/StaticMap';
+import StaticMap from '../components/StaticMap';
 
 interface ContactProps { }
 
@@ -32,7 +32,7 @@ const Contact: FC<ContactProps> = () => {
 
   const mask: CSSProperties = useMemo(
     () => {
-      return{
+      return {
         maskImage: "radial-gradient(69.66% 50% at 49.97% 50%, #000 0%, rgba(0, 0, 0, 0.00) 100%)",
         WebkitMaskImage: "radial-gradient(69.66% 50% at 49.97% 50%, #000 0%, rgba(0, 0, 0, 0.00) 100%)",
         top: 0,
@@ -44,14 +44,14 @@ const Contact: FC<ContactProps> = () => {
         position: 'absolute',
         backgroundImage: 'url(/1000x500@2x.png)',
         backgroundPosition: 'center',
-        backgroundSize: window.innerWidth*3,
+        backgroundSize: window.innerWidth * 3,
         // backgroundSize: 'cover',
         backgroundRepeat: 'no-repeat',
       }
     },
     [],
   )
-  
+
   // const mask: CSSProperties = 
 
   const onSubmit = ({ name, email, message }: FormState) => {

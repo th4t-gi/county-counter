@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
-import NavBar from './NavBar'
-import { InteractiveMap } from './components/InteractiveMap'
+import NavBar from '../components/NavBar'
+import { InteractiveMap } from '../components/InteractiveMap'
 import Map, { CircleLayer, FillLayer, Layer, LineLayer, MapLayerMouseEvent, MapRef, Source, ViewState } from 'react-map-gl'
 
 // import geojson from '../resources/usaPolygon.json'
@@ -164,7 +164,7 @@ const Test = () => {
         <Source id='points' type='geojson' data={points}>
           <Layer {...pointStyle} />
         </Source>
-        
+
 
 
       </Map>

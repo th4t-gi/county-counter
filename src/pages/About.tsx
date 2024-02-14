@@ -1,12 +1,12 @@
 import React, { FC } from 'react';
-import NavBar from './NavBar';
+import NavBar from '../components/NavBar';
 
 
-interface AboutProps {}
+interface AboutProps { }
 
 const About: FC<AboutProps> = () => (
   <div>
-    <NavBar/>
+    <NavBar />
     About Component
   </div>
 );

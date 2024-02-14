@@ -2,7 +2,7 @@ import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import React, { FC, useState } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useNavigate } from 'react-router-dom';
-import { auth, db, initializeUserFirestore, signUpWithEmailAndPassword } from '../../resources/firebase';
+import { auth, db, initializeUserFirestore, signUpWithEmailAndPassword } from '../../utils/firebase';
 
 import Box from '@mui/joy/Box'
 import Button from '@mui/joy/Button'
@@ -13,17 +13,17 @@ import Typography from '@mui/joy/Typography'
 import Link from '@mui/joy/Link'
 import IconButton from '@mui/joy/IconButton'
 import Card from '@mui/joy/Card'
-import StaticMap from '../utils/StaticMap';
+import StaticMap from '../../components/StaticMap';
 
 import usCityData from '../../resources/uscities.json'
-import { USCity } from '../../resources/utils';
+import { USCity } from '../../utils/utils';
 import Autocomplete from '@mui/joy/Autocomplete';
 import { useTheme } from '@mui/joy';
 import { useMediaQuery } from '@mui/material'
 import { useForm } from "react-hook-form";
 import { FirebaseError } from 'firebase/app';
 import { browserLocalPersistence, browserSessionPersistence, setPersistence } from '@firebase/auth';
-import FormField from './FormField';
+import FormField from '../../components/FormField';
 
 //TODO: send verification email
 
