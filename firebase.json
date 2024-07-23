@@ -1,16 +1,8 @@
 {
-  "firestore": [
-    {
-      "database": "default",
-      "rules": "firestore.default.rules",
-      "indexes": "firestore.indexes.json"
-    },
-    {
-      "database": "countycounter-dev",
-      "rules": "firestore.dev.rules",
-      "indexes": "firestore.indexes.json"
-    }
-  ],
+  "firestore": {
+    "rules": "./firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
   "hosting": [
     {
       "site": "county-counting",
@@ -58,5 +50,30 @@
         "npm --prefix \"$RESOURCE_DIR\" run build"
       ]
     }
-  ]
+  ],
+  "emulators": {
+    "auth": {
+      "host": "localhost",
+      "port": 9099
+    },
+    "functions": {
+      "host": "localhost",
+      "port": 5001
+    },
+    "firestore": {
+      "host": "localhost",
+      "port": 9000
+    },
+    "hosting": {
+      "host": "localhost",
+      "port": 5002
+    },
+    "ui": {
+      "enabled": true
+    },
+    "singleProjectMode": true
+  },
+  "extensions": {
+    "firestore-send-email": "firebase/firestore-send-email@0.1.34"
+  }
 }

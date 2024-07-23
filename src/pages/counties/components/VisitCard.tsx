@@ -14,22 +14,28 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import dayjs from 'dayjs'
 import { isMobile } from 'react-device-detect';
 
-import { NatureOptions, Visit, natureOptions } from '../utils/utils'
+import { County, NatureOptions } from '../../../types'
+import { deleteVisit, natureOptions, updateVisit } from '../counties'
 
 
 interface VisitCardProps {
   index: number
-  length: number,
-  visit: Visit
-  editVisit: (index: number, visit: Partial<Visit>) => void
-  removeVisit: (index: number) => void
+  length: number
+  county: County
+  // editVisit: (index: number, visit: Partial<Visit>) => void
+  // removeVisit: (index: number) => void
   trips: string[]
 }
 
 export const VisitCard: FC<VisitCardProps> = (props) => {
   const [showDelete, setShowDelete] = useState(false)
-  const { index, length, visit, editVisit, removeVisit, trips } = props
+  const { index, length, county,
+    // editVisit, removeVisit,
+    trips } = props
 
+  // const dispatch = useAppDispatch()
+
+  const visit = county.visits[index]
 
 
   function nth(n: number): string {
@@ -53,10 +59,10 @@ export const VisitCard: FC<VisitCardProps> = (props) => {
       >
         <Typography level='title-md'>
           {/* Visit */}
-          {index == 0 ? 'Latest Visit' : nth(length - index) + ' Visit'}
+          {index === length - 1 ? 'Latest Visit' : nth(index + 1) + ' Visit'}
         </Typography>
 
-        {(showDelete || isMobile) && <IconButton color='danger' onClick={() => removeVisit(index)}>
+        {(showDelete || isMobile) && <IconButton color='danger' onClick={() => deleteVisit(county, index)}>
           <DeleteForeverRoundedIcon fontSize='small' />
         </IconButton>}
       </Stack>
@@ -71,7 +77,18 @@ export const VisitCard: FC<VisitCardProps> = (props) => {
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <DatePicker
             value={dayjs(visit.timestamp)}
-            onAccept={(v) => editVisit(index, { timestamp: dayjs(v).toDate() })}
+            onAccept={(v) => {
+              updateVisit(
+                county,
+                index,
+                {
+                  ...visit,
+                  timestamp: dayjs(v).toJSON()
+                }
+              )
+            }}
+            // onChange={(v) => console.log('hi')}
+            closeOnSelect
             sx={{ flex: '1 1 auto' }}
             label="Date"
             views={['year', 'month', 'day']}
@@ -85,7 +102,16 @@ export const VisitCard: FC<VisitCardProps> = (props) => {
           placeholder='Trip'
           sx={{ flex: '1 1 40%' }}
           value={visit.trip}
-          onChange={(e, trip) => editVisit(index, { trip })}
+          onChange={(e, trip) =>
+            updateVisit(
+              county,
+              index,
+              {
+                ...visit,
+                trip
+              }
+            )
+          }
         >
           {trips.length ?
             trips.map((v, i) =>
@@ -104,7 +130,18 @@ export const VisitCard: FC<VisitCardProps> = (props) => {
           sx={{ flex: '1 1 40%' }}
           placeholder='Nature of visit'
           value={visit.nature}
-          onChange={(e, nature) => { if (nature) editVisit(index, { nature }) }}
+          onChange={(e, nature) => {
+            if (nature) {
+              updateVisit(
+                county,
+                index,
+                {
+                  ...visit,
+                  nature
+                }
+              )
+            }
+          }}
         >
           {Object.keys(natureOptions).map((v, i) =>
             <Option key={i} value={v}>{natureOptions[v as NatureOptions]}</Option>

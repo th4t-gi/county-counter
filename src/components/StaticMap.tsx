@@ -5,7 +5,6 @@ import { featureCollection, nearestPoint, point } from "@turf/turf"
 
 import imgCoordsSource from "../resources/static_coords.json"
 
-import { storage } from '../utils/firebase';
 import { getDownloadURL, getStorage, ref } from "firebase/storage";
 
 const imgCoords = imgCoordsSource as [number, number][]
@@ -59,7 +58,7 @@ const StaticMap: FC<StaticMapProps> = (props) => {
     const long = nearest.geometry.coordinates[0]
 
     const name = `${lat},${long}-w1280h1280z7.png`
-    const imgRef = ref(storage, 'static_maps_new/' + name);
+    const imgRef = ref(getStorage(), 'static_maps_new/' + name);
 
     getDownloadURL(imgRef).then(setImgSrc)
   }
@@ -101,7 +100,7 @@ const StaticMap: FC<StaticMapProps> = (props) => {
 
 
   return (
-    <div style={{ width: '100vw', height: '100vh', ...props.style }} className={props.className}>
+    <div style={{ width: '100%', height: '100%', ...props.style }} className={props.className}>
       <div style={imgStyle}></div>
       {/* <img {...props.style} src={imgSrc} alt={`Static map centered at ${JSON.stringify(imgCenter)}`} /> */}
     </div>

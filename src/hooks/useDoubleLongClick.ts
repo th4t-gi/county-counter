@@ -124,7 +124,7 @@ const useDoubleLongClick = ({
         clickRef.off('boxzoomstart', handleMove)
       };
     }
-  }, [ref?.current]);
+  }, [ref?.current, onSingleClick, onDoubleClick, onLongClick]);
 };
 
 export default useDoubleLongClick;

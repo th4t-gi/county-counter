@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import NavBar from '../components/NavBar'
-import { InteractiveMap } from '../components/InteractiveMap'
+import { InteractiveMap } from './counties/components/InteractiveMap'
 import Map, { CircleLayer, FillLayer, Layer, LineLayer, MapLayerMouseEvent, MapRef, Source, ViewState } from 'react-map-gl'
 
 // import geojson from '../resources/usaPolygon.json'

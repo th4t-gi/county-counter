@@ -26,6 +26,8 @@ yarn-error.log*
 # Firebase cache
 .firebase/
 firebase-debug.log
+firestore-debug.log
+ui-debug.log
 
 # hosting
 /hosting/.env*
@@ -36,5 +38,8 @@ hosting/dist/index.html
 /functions/dist/
 /functions/src/config/**
 /functions/.runtimeconfig.json
+
+# extentions
+/extentions/firestore-send-email.env
 
 /misc-json

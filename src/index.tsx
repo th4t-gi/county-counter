@@ -1,19 +1,21 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
-
 import './index.css';
-// import 'mapbox-gl/dist/mapbox-gl.css';
-
 import App from './App';
+
+import { FirebaseAppProvider } from 'reactfire'
+import { firebaseConfig } from './firebase';
+
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 root.render(
   <React.StrictMode>
-    <BrowserRouter>
+    {/* <Provider store={store}> */}
+    <FirebaseAppProvider firebaseConfig={firebaseConfig}>
       <App />
-    </BrowserRouter>
+    </FirebaseAppProvider>
+    {/* </Provider> */}
   </React.StrictMode>
 );

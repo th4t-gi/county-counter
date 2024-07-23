@@ -14,37 +14,34 @@ import CloseRounded from '@mui/icons-material/CloseRounded'
 
 import { isMobile } from 'react-device-detect';
 
-import { County, CountyFeature, Visit } from '../utils/utils'
 import { VisitCard } from './VisitCard'
+import { addVisit, deleteCounty } from '../counties'
+import { doc } from 'firebase/firestore'
+import { auth, countyConverter, db } from '../../../firebase'
+import { useFirestoreDocData } from 'reactfire'
+import { CountyFeature } from '../../../types'
 
 interface DetailPanelProps {
-  feature: CountyFeature
-  focused: County | undefined
-  setVisits: (id: number, visits: Visit[]) => void
-  addVisit: (feature: CountyFeature) => void
-  editVisit: (id: number) => (index: number, visit: Partial<Visit>) => void
-  removeVisit: (id: number) => (index: number) => void
+  focused: CountyFeature
   onClose: () => void
 }
 
 export const DetailPanel: FC<DetailPanelProps> = (props) => {
 
   const {
-    feature,
     focused,
-    setVisits,
-    addVisit,
-    editVisit,
-    removeVisit,
     onClose
   } = props
+
+  const countyRef = doc(db, 'users', auth.currentUser!.uid, 'counties', focused.id.toString()).withConverter(countyConverter)
+  const { status, data: county } = useFirestoreDocData(countyRef);
 
   const [titleHovered, setTitleHovered] = useState(false)
 
   return (
     <Drawer
       disableEnforceFocus
-      open={!!feature}
+      open={!!focused}
       anchor={isMobile ? 'bottom' : 'right'}
       hideBackdrop={true}
       onClose={onClose}
@@ -67,28 +64,25 @@ export const DetailPanel: FC<DetailPanelProps> = (props) => {
     >
       <DialogTitle
         sx={{ pt: 1, justifyContent: 'space-between', width: 'fit-container' }}
-        level='h3'
+        component={"div"}
         onMouseOver={() => setTitleHovered(true)}
         onMouseOut={() => setTitleHovered(false)}
       >
-        <IconButton
-          onClick={onClose}
-        >
+        <IconButton onClick={onClose}>
           <CloseRounded />
         </IconButton>
 
-        {/* BUG: Warning: validateDOMNesting(...): <h3> cannot appear as a child of <h2>. */}
         <Typography
           level='h3'
           sx={{ flex: "0 1 auto", whiteSpace: "nowrap", overflow: 'hidden', textOverflow: 'ellipsis' }}
         >
-          {feature?.properties.name} {feature?.properties.lsad}
+          {focused?.properties.name} {focused?.properties.lsad}
         </Typography>
 
 
-        {(titleHovered || isMobile) && !!focused?.visits.length ?
+        {(titleHovered || isMobile) && !!county?.visits.length ?
           <IconButton
-            onClick={() => setVisits(focused.id, [])}
+            onClick={() => deleteCounty(focused.id)}
             color='danger'
           // sx={{ position: 'absolute', top: 16, right: 16 }}
           >
@@ -101,22 +95,20 @@ export const DetailPanel: FC<DetailPanelProps> = (props) => {
       <DialogContent>
         <Stack p={2} gap={2}>
 
-          <Button startDecorator={<AddIcon />} variant='soft' onClick={() => addVisit(feature)}>
+          <Button startDecorator={<AddIcon />} variant='soft' onClick={() => addVisit(auth.currentUser!.uid, focused, !!county?.visits.length)}>
             {/* <Button startDecorator={<AddIcon />} variant='soft'> */}
             Add Visit
           </Button>
 
-          {focused && focused.visits.sort((v1, v2) => v2.timestamp.getTime() - v1.timestamp.getTime()).map((v, i) =>
+          {county && county.visits.map((v, i) =>
             <VisitCard
               key={i}
-              visit={v}
-              length={focused.visits.length}
+              county={county}
+              length={county.visits.length}
               index={i}
-              editVisit={editVisit(focused.id)}
-              removeVisit={removeVisit(focused.id)}
               trips={[]}
             />
-          )}
+          ).reverse()}
 
         </Stack>
       </DialogContent>

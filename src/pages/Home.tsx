@@ -4,7 +4,7 @@ import StaticMap from "../components/StaticMap";
 import NavBar from '../components/NavBar';
 import { useNavigate } from 'react-router-dom';
 import Button from '@mui/joy/Button';
-import { InteractiveMap } from '../components/InteractiveMap';
+import { InteractiveMap } from './counties/components/InteractiveMap';
 import Typography from '@mui/joy/Typography';
 import Footer from '../components/Footer';
 import Box from '@mui/joy/Box';
@@ -60,8 +60,8 @@ const Home: FunctionComponent<HomeProps> = (props) => {
       </nav> */}
 
 
-      <Box height={800}>
-        <Stack width={'100%'} height={'100%'} justifyContent={'center'} p={{ xs: 4, sm: 10 }} sx={{ position: 'absolute', zIndex: 1 }}>
+      <Box height={'85vh'}>
+        <Stack width={'100%'} height={'85vh'} justifyContent={'center'} py={0} px={{ xs: 4, sm: 10 }} sx={{ position: 'absolute', zIndex: 1 }}>
           <Card sx={{ maxWidth: 710, maxHeight: '100%', p: { xs: 4, sm: 8 } }}>
             <Stack spacing={2}>
 
@@ -70,7 +70,7 @@ const Home: FunctionComponent<HomeProps> = (props) => {
               </Typography>
 
               <Typography level='body-lg' textOverflow={'ellipsis'}>
-                County Counting, or as it is more commonly known, county collecting, is a way to gamify road travel to try and visit all 3,243 counties in the United States and its territories.
+                County Counting, otherwise known as county collecting, is a hobby to track and try to visit all 3,243 counties in the United States and its territories.
               </Typography>
               {/* <Typography level='body-lg'>
                 Aliquam vel platea curabitur sit vestibulum egestas sit id lorem. Aliquet neque, dui sed eget scelerisque. Non at at venenatis tortor amet feugiat ullamcorper in. Odio vulputate cras vel lacinia turpis volutpat adipiscing. Sollicitudin at velit, blandit tempus nunc in.
@@ -86,7 +86,7 @@ const Home: FunctionComponent<HomeProps> = (props) => {
         </Stack>
 
 
-        <StaticMap random mask style={{ zIndex: 0, height: "100%" }} />
+        <StaticMap random mask style={{ zIndex: 0, height: "85vh" }} />
 
       </Box>
 

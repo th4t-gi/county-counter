@@ -1,7 +1,7 @@
 import { Expression, FillLayer, LineLayer } from 'mapbox-gl';
-import { SortOptions } from './utils';
+import { SortOptions } from '../../types';
 
-const colorArray = ["#63a088", "#f9e784", "#7582a9", "#eb8258", "#f8333c", "#b24c63"]
+// const colorArray = ["#63a088", "#f9e784", "#7582a9", "#eb8258", "#f8333c", "#b24c63"]
 
 export function getStyle(sort: SortOptions) {
 
