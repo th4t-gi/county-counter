@@ -40,6 +40,6 @@ hosting/dist/index.html
 /functions/.runtimeconfig.json
 
 # extentions
-/extentions/firestore-send-email.env
+/extensions/firestore-send-email.env
 
 /misc-json
