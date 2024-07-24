@@ -21,11 +21,11 @@ const SelectBar: FC<SelectBarProps> = (props) => {
 
   const { selected, counties, setSelectMode, mapRef } = props
 
-  const exists = !!selected.length && selected.every(id => counties.find(c => c.id == id))
+  const exists = !!selected.length && selected.every(id => counties.find(c => c.id === id))
   const small = window.innerWidth < 800
 
   const addVisits = () => {
-    selected.map(id => {
+    selected.forEach(id => {
       const features = mapRef?.current?.querySourceFeatures("composite", {
         sourceLayer: 'base-counties-ids',
         filter: ["==", ['id'], id]

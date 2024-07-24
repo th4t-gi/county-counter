@@ -10,7 +10,7 @@ const NavBar = () => {
    return (
       <Stack direction={'row'} px={{xs: 2, sm: 4}} py={2} justifyContent={'space-between'}>
          <Stack sx={{ cursor: 'pointer' }} direction={'row'} gap={2} alignItems={'center'} onClick={() => navigate("/")}>
-            <img width={50} height={'50'} src='/logo700.png' />
+            <img width={50} height={'50'} src='/logo700.png' alt='County Counter logo'/>
             <Typography maxWidth={{xs: 100, sm: 200}} level='h3'>County Counter</Typography>
          </Stack>
          <Stack direction={'row'} gap={{xs: 1, sm: 2}} alignItems={'center'}>

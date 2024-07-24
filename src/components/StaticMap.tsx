@@ -1,4 +1,4 @@
-import React, { CSSProperties, FC, useContext, useEffect, useMemo, useState } from 'react';
+import React, { CSSProperties, FC, useEffect, useState } from 'react';
 import { useGeolocated } from "react-geolocated";
 
 import { featureCollection, nearestPoint, point } from "@turf/turf"
@@ -33,12 +33,12 @@ type StaticMapProps = BaseStaticMapProps &
   })
 
 const StaticMap: FC<StaticMapProps> = (props) => {
-  const accessToken = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN
+  // const accessToken = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN
 
   const { defaultCoords, mask, live, random } = props
   let [imgSrc, setImgSrc] = useState('/blank.png');
 
-  const { coords, isGeolocationAvailable, isGeolocationEnabled } =
+  const { coords } =
     useGeolocated({
       positionOptions: {
         enableHighAccuracy: false,
@@ -70,7 +70,7 @@ const StaticMap: FC<StaticMapProps> = (props) => {
     } else if (defaultCoords) {
       getImgUrl([defaultCoords.long, defaultCoords.lat])
     }
-  }, [])
+  })
 
 
   useEffect(() => {
@@ -80,7 +80,7 @@ const StaticMap: FC<StaticMapProps> = (props) => {
       getImgUrl([coords.longitude, coords.latitude])
     }
 
-  }, [coords])
+  }, [coords, live])
 
   const imgMask: CSSProperties = {
     maskImage: "radial-gradient(69.66% 50% at 49.97% 50%, #000 0%, rgba(0, 0, 0, 0.00) 100%)",

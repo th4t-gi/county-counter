@@ -6,7 +6,6 @@ import { County, CountyFeature } from '../../../types'
 import useDoubleLongClick from '../../../hooks/useDoubleLongClick';
 import { bbox } from '@turf/turf';
 import usePrevious from '../../../hooks/usePrevious';
-import { auth } from '../../../firebase';
 import { natureOptions } from '../counties';
 
 type InteractiveMapProps = {
@@ -43,12 +42,12 @@ export const InteractiveMap: FC<InteractiveMapProps> = forwardRef((props, ref) =
 
   // const styleId = process.env.REACT_APP_ENV === 'production' ? 'clo0th5kf00an01p60t1a24s2' : 'clrih8y4l006f01r7f899d6ok'
   const styleId = 'clo0th5kf00an01p60t1a24s2'
-
+  const mapIsLoaded = mapRef.current?.isStyleLoaded() && !isLoaded
   useEffect(() => {
-    if (!isLoaded && mapRef.current?.isStyleLoaded()) {
+    if (mapIsLoaded) {
       setIsLoaded(true)
     }
-  }, [mapRef.current?.isStyleLoaded()])
+  }, [mapIsLoaded])
   //BUG: Renders all counties a second time after first visitAdded
 
   //Rendering each county
@@ -57,7 +56,7 @@ export const InteractiveMap: FC<InteractiveMapProps> = forwardRef((props, ref) =
       console.log('rendering map');
       // console.log(prevCounties, counties);
 
-      const deleted = prevCounties?.filter(prev => !counties.some(c => prev.id == c.id && prev.visits.length == c.visits.length))
+      const deleted = prevCounties?.filter(prev => !counties.some(c => prev.id === c.id && prev.visits.length === c.visits.length))
       deleted?.forEach(c => {
         console.log(`deleting county ${c.id}`);
         mapRef.current?.removeFeatureState(getFeatureIdentifier(c.id))
@@ -66,13 +65,13 @@ export const InteractiveMap: FC<InteractiveMapProps> = forwardRef((props, ref) =
       counties.forEach(c => {
         const featState = mapRef.current?.getFeatureState(getFeatureIdentifier(c.id))
 
-        if (featState?.count == c.visits.length) {
+        if (featState?.count === c.visits.length) {
           // console.log(`county ${c.id} already rendered`);
           return
         }
         console.log(`county ${c.id} rendering`);
 
-        const lived = c.visits.some(v => v.nature == 'lived')
+        const lived = c.visits.some(v => v.nature === 'lived')
         const firstVisit = c.visits.reduce((prev, curr) => prev.timestamp < curr.timestamp ? prev : curr)
         const nature = c.visits.map(v => v.nature).reduce((prev, curr) => {
           if (prev && curr && Object.keys(natureOptions).indexOf(prev) > Object.keys(natureOptions).indexOf(curr)) {

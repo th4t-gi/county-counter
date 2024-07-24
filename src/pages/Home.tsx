@@ -1,16 +1,14 @@
-import { FunctionComponent, useContext, useEffect } from 'react';
+import { FunctionComponent } from 'react';
 import StaticMap from "../components/StaticMap";
 
 import NavBar from '../components/NavBar';
 import { useNavigate } from 'react-router-dom';
 import Button from '@mui/joy/Button';
-import { InteractiveMap } from './counties/components/InteractiveMap';
 import Typography from '@mui/joy/Typography';
 import Footer from '../components/Footer';
 import Box from '@mui/joy/Box';
 import Stack from '@mui/joy/Stack';
 import Card from '@mui/joy/Card';
-import Link from '@mui/joy/Link'
 import { ArrowForward } from '@mui/icons-material';
 
 interface HomeProps {
@@ -21,8 +19,8 @@ const Home: FunctionComponent<HomeProps> = (props) => {
   // const { location } = useContext(GlobalContext)
   // console.log("Location:", location);
 
-  const lat = Math.random() * 20 + 27//46.997998 to 27.67210851272917 
-  const long = -1 * (Math.random() * 60 + 67)//-67.088646 to -123.98295649529739
+  // const lat = Math.random() * 20 + 27//46.997998 to 27.67210851272917 
+  // const long = -1 * (Math.random() * 60 + 67)//-67.088646 to -123.98295649529739
   // console.log(lat,long);
 
   const navigate = useNavigate()

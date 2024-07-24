@@ -1,12 +1,10 @@
-import Button from '@mui/joy/Button';
 import Stack from '@mui/joy/Stack';
 import Typography from '@mui/joy/Typography';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import TwitterIcon from '@mui/icons-material/Twitter';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
-import IconButton from '@mui/joy/IconButton';
 
 const Footer = () => {
 
