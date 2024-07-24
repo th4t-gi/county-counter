@@ -9,7 +9,7 @@ function usePrevious<T>(value: T, init?: T): T | undefined {
 
   useEffect(() => {
     if (init) ref.current = init
-  })
+  }, [])
 
   return ref.current;
 }
