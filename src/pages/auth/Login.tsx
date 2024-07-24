@@ -31,11 +31,10 @@ type FormState = {
 interface LoginProps { }
 
 const Login: FC<LoginProps> = () => {
-  const { handleSubmit, register, formState: { errors }, setError, trigger } = useForm<FormState>();
+  const { handleSubmit, register, formState: { errors }, setError } = useForm<FormState>();
   const navigate = useNavigate()
   // const { error, profile } = useAppSelector(state => state.auth)
   // const dispatch = useAppDispatch()
-  const [errorOpen, setErrorOpen] = useState(false)
 
   const theme = useTheme()
   const isSmall = useMediaQuery(theme.breakpoints.down('sm'));
@@ -46,17 +45,17 @@ const Login: FC<LoginProps> = () => {
     if (auth.currentUser) {
       navigate("/counties")
     }
-  }, [auth.currentUser])
+  }, [auth.currentUser, navigate])
 
   const onSubmit = ({ email, password }: FormState) => {
 
     loginUser({ email, password }, remember).catch((e: FirebaseError) => {
       console.log(e.code);
 
-      if (e.code == 'auth/invalid-login-credentials' || e.code == 'auth/user-not-found' || e.code == 'auth/wrong-password') {
+      if (e.code === 'auth/invalid-credential' || e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password') {
         setError("email", { message: "" })
         setError("password", { message: "Incorrect email or password" })
-      } else if (e.code == 'auth/invalid-email') {
+      } else if (e.code === 'auth/invalid-email') {
         setError('email', { message: "Please enter a valid email" })
       }
     })

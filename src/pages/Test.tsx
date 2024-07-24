@@ -1,13 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react'
 import NavBar from '../components/NavBar'
-import { InteractiveMap } from './counties/components/InteractiveMap'
+// import { InteractiveMap } from './counties/components/InteractiveMap'
 import Map, { CircleLayer, FillLayer, Layer, LineLayer, MapLayerMouseEvent, MapRef, Source, ViewState } from 'react-map-gl'
 
 // import geojson from '../resources/usaPolygon.json'
 import { Feature, FeatureCollection, Point, Polygon } from 'geojson'
-import { BBox, area, buffer, centroid, hexGrid, intersect, pointGrid, squareGrid, triangleGrid } from '@turf/turf'
+import { BBox, area, buffer, centroid, hexGrid, intersect, /*pointGrid, squareGrid, triangleGrid*/ } from '@turf/turf'
 import { Typography } from '@mui/joy'
-import { writeFileSync } from 'fs'
+// import { writeFileSync } from 'fs'
 
 const bbox: BBox = [-125, 25, -67, 49];
 const SPACING = 50
@@ -30,11 +30,11 @@ const Test = () => {
     setView(e.viewState)
   };
 
-  const median = (arr: number[]) => {
-    const mid = Math.floor(arr.length / 2),
-      nums = [...arr].sort((a, b) => a - b);
-    return arr.length % 2 !== 0 ? nums[mid] : (nums[mid - 1] + nums[mid]) / 2;
-  };
+  // const median = (arr: number[]) => {
+  //   const mid = Math.floor(arr.length / 2),
+  //     nums = [...arr].sort((a, b) => a - b);
+  //   return arr.length % 2 !== 0 ? nums[mid] : (nums[mid - 1] + nums[mid]) / 2;
+  // };
 
   useEffect(() => {
 
@@ -71,7 +71,7 @@ const Test = () => {
         features
       }
 
-      const coords = points.features.map(feature => feature.geometry.coordinates)
+      // const coords = points.features.map(feature => feature.geometry.coordinates)
 
       // console.log(JSON.stringify(coords))
       setPoints(points)

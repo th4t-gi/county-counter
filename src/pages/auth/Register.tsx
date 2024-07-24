@@ -52,7 +52,7 @@ const Register: FC<RegisterProps> = () => {
     createUser({ ...user, hometown }, remember).then(() => {
       navigate("/counties")
     }).catch((e: FirebaseError) => {
-      if (e.code == 'auth/email-already-in-use') {
+      if (e.code === 'auth/email-already-in-use') {
         setError("email", { message: "There is already an accound with this email" })
       } else {
         console.error(e)
@@ -122,7 +122,7 @@ const Register: FC<RegisterProps> = () => {
                 color='neutral'
                 options={usCities.sort((a, b) => (a.state_id < b.state_id) ? -1 : 1)}
                 groupBy={(option) => option.state_name}
-                onInputChange={(e, value, reason) => setHometownOpen(value.length > 2 && reason == 'input')}
+                onInputChange={(e, value, reason) => setHometownOpen(value.length > 2 && reason === 'input')}
                 autoHighlight
                 blurOnSelect
                 placeholder='Anywhere, USA'

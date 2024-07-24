@@ -1,4 +1,3 @@
-import React from 'react';
 import { RefObject, useEffect } from 'react';
 import { MapEvent, MapLayerMouseEvent, MapLayerTouchEvent, MapRef } from 'react-map-gl';
 
@@ -124,7 +123,8 @@ const useDoubleLongClick = ({
         clickRef.off('boxzoomstart', handleMove)
       };
     }
-  }, [ref?.current, onSingleClick, onDoubleClick, onLongClick]);
+  }, [ref, onSingleClick, onDoubleClick, onLongClick]);
+
 };
 
 export default useDoubleLongClick;

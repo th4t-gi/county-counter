@@ -17,7 +17,7 @@ import { addVisit, deleteCounty, deleteVisit, sortOptions } from './counties';
 import { collection } from 'firebase/firestore';
 import { isEmpty } from 'lodash';
 import { logoutUser } from '../auth/auth';
-import { useFirestoreCollectionData, useSigninCheck } from 'reactfire';
+import { useFirestoreCollectionData } from 'reactfire';
 
 const statesList: { [key: string]: { state: string, abbreviation: string } } = statesObj
 
@@ -56,7 +56,7 @@ const CountiesDashboard: FC<CountiesDashboardProps> = (props) => {
   // const { data: signInResult, status: authStatus } = useSigninCheck();
 
   const countiesRef = collection(db, 'users', auth.currentUser!.uid, 'counties').withConverter(countyConverter)
-  const { status, data: counties } = useFirestoreCollectionData(countiesRef, { idField: '' });
+  const { data: counties } = useFirestoreCollectionData(countiesRef, { idField: '' });
 
   const countyCount = counties?.length
 
@@ -77,7 +77,7 @@ const CountiesDashboard: FC<CountiesDashboardProps> = (props) => {
 
       addVisit(auth.currentUser!.uid, currCounty, !isEmpty(currCounty.state))
     }
-  }, [currCounty])
+  }, [currCounty, travelMode, geoControlTracking])
 
   useEffect(() => {
     if (focusedFeature) {
@@ -91,8 +91,7 @@ const CountiesDashboard: FC<CountiesDashboardProps> = (props) => {
       }
     }
 
-  }, [mapRef.current])
-
+  }, [mapRef.current, focusedFeature])
 
   const addSelected = (id: number) => {
     if (!selected.includes(id)) setSelected([...selected, id])
