@@ -1,0 +1,18 @@
+{
+  "projects": {
+    "default": "county-counting"
+  },
+  "targets": {
+    "county-counting": {
+      "hosting": {
+        "development": [
+          "countycounter-dev"
+        ],
+        "production": [
+          "countycounter"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

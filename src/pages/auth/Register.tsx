@@ -1,8 +1,6 @@
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import React, { FC, useState } from 'react';
-import { useAuthState } from 'react-firebase-hooks/auth';
 import { useNavigate } from 'react-router-dom';
-import { auth, db, initializeUserFirestore, signUpWithEmailAndPassword } from '../../resources/firebase';
 
 import Box from '@mui/joy/Box'
 import Button from '@mui/joy/Button'
@@ -13,17 +11,18 @@ import Typography from '@mui/joy/Typography'
 import Link from '@mui/joy/Link'
 import IconButton from '@mui/joy/IconButton'
 import Card from '@mui/joy/Card'
-import StaticMap from '../utils/StaticMap';
+import StaticMap from '../../components/StaticMap';
 
 import usCityData from '../../resources/uscities.json'
-import { USCity } from '../../resources/utils';
+
 import Autocomplete from '@mui/joy/Autocomplete';
 import { useTheme } from '@mui/joy';
 import { useMediaQuery } from '@mui/material'
 import { useForm } from "react-hook-form";
 import { FirebaseError } from 'firebase/app';
-import { browserLocalPersistence, browserSessionPersistence, setPersistence } from '@firebase/auth';
-import FormField from './FormField';
+import FormField from './components/FormField';
+import { createUser } from './auth';
+import { USCity } from '../../types';
 
 //TODO: send verification email
 
@@ -32,35 +31,32 @@ type FormFields = 'username' | 'email' | 'hometown' | 'password' | 'confirm_pass
 type FormState = {
   [key in FormFields]: string
 }
+
 interface RegisterProps { }
 
 const Register: FC<RegisterProps> = () => {
-  const { handleSubmit, register, formState: { errors }, setValue, trigger } = useForm<FormState>();
+  const { handleSubmit, register, formState: { errors }, setValue, trigger, setError } = useForm<FormState>();
 
   const navigate = useNavigate()
   const theme = useTheme()
   const isSmall = useMediaQuery(theme.breakpoints.down('sm'));
 
+  const [hometown, setHometown] = useState<USCity | null>(null)
   const [hometownOpen, setHometownOpen] = useState(false)
   const [remember, setRemember] = useState(false)
 
   const usCities = usCityData as USCity[]
 
-  const onSubmit = ({ username, email, password, hometown }: FormState) => {
-    const persistence = remember ? browserLocalPersistence : browserSessionPersistence
-    
-    setPersistence(auth, persistence).then(() => {
-      signUpWithEmailAndPassword(email, password).then(uid => {
-        if (uid) {
-          const user = {
-            username, uid, email, hometown
-          }
-          initializeUserFirestore(db, user)
-        }
-      }).catch((e: FirebaseError) => {
-        console.log(e.code);
-      })
-      navigate("/dashboard")
+  const onSubmit = (user: FormState) => {
+
+    createUser({ ...user, hometown }, remember).then(() => {
+      navigate("/counties")
+    }).catch((e: FirebaseError) => {
+      if (e.code == 'auth/email-already-in-use') {
+        setError("email", { message: "There is already an accound with this email" })
+      } else {
+        console.error(e)
+      }
     })
   }
 
@@ -94,6 +90,7 @@ const Register: FC<RegisterProps> = () => {
               <Input
                 color='neutral'
                 type='text'
+                autoComplete='username'
                 {...register("username", {
                   required: "Please enter a username",
                   minLength: {
@@ -108,6 +105,7 @@ const Register: FC<RegisterProps> = () => {
               <Input
                 color='neutral'
                 type='email'
+                autoComplete='email'
                 placeholder="someone@example.com"
                 {...register("email", {
                   required: "Please enter a valid email address",
@@ -119,7 +117,7 @@ const Register: FC<RegisterProps> = () => {
               />
             </FormField>
 
-            <FormField error={errors.hometown} label="Hometown">
+            <FormField error={errors.hometown} label="Hometown (optional)">
               <Autocomplete
                 color='neutral'
                 options={usCities.sort((a, b) => (a.state_id < b.state_id) ? -1 : 1)}
@@ -127,20 +125,24 @@ const Register: FC<RegisterProps> = () => {
                 onInputChange={(e, value, reason) => setHometownOpen(value.length > 2 && reason == 'input')}
                 autoHighlight
                 blurOnSelect
-                placeholder='Nowhere, USA'
+                placeholder='Anywhere, USA'
                 getOptionLabel={option => option.city + ", " + option.state_id}
                 noOptionsText="Hmm... I don't know of this place"
                 getOptionKey={option => option.id}
 
                 open={hometownOpen}
-                onClose={() => setHometownOpen(false) }
+                onClose={() => setHometownOpen(false)}
 
                 {...register("hometown", {
-                  required: "Please select a hometown",
                   onBlur: (e) => trigger('hometown')
                 })}
 
-                onChange={(e, option) => {if (option) setValue('hometown', option.city)}}
+                onChange={(e, option) => {
+                  if (option) {
+                    setValue('hometown', option.city)
+                    setHometown(option)
+                  }
+                }}
               />
             </FormField>
 
@@ -191,7 +193,7 @@ const Register: FC<RegisterProps> = () => {
         </form>
       </Card>
 
-      <StaticMap coords={{ lat: 39, long: -108, zoom: 5 }} className='fixed left-0 top-0 -z-10 h-full w-full object-cover opacity-40' />
+      <StaticMap random mask live className='fixed left-0 top-0 -z-10 object-cover' />
 
     </Box>
   )
