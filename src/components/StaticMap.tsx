@@ -70,7 +70,7 @@ const StaticMap: FC<StaticMapProps> = (props) => {
     } else if (defaultCoords) {
       getImgUrl([defaultCoords.long, defaultCoords.lat])
     }
-  })
+  }, [])
 
 
   useEffect(() => {
