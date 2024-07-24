@@ -9,7 +9,7 @@
           "countycounter-dev"
         ],
         "production": [
-          "countycounter"
+          "county-counting"
         ]
       }
     }
