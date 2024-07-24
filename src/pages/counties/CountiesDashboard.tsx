@@ -93,7 +93,6 @@ const CountiesDashboard: FC<CountiesDashboardProps> = (props) => {
 
   }, [mapRef.current, focusedFeature])
 
-
   const addSelected = (id: number) => {
     if (!selected.includes(id)) setSelected([...selected, id])
   }

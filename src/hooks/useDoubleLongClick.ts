@@ -124,6 +124,7 @@ const useDoubleLongClick = ({
       };
     }
   }, [ref, onSingleClick, onDoubleClick, onLongClick]);
+
 };
 
 export default useDoubleLongClick;

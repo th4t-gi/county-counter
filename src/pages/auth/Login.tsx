@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { FirebaseError } from 'firebase/app';
 
 import { useMediaQuery } from '@mui/material'
-import { useTheme } from '@mui/joy';
+import { DialogActions, DialogContent, DialogTitle, Modal, ModalDialog, useTheme } from '@mui/joy';
 import Box from '@mui/joy/Box'
 import Button from '@mui/joy/Button'
 import Checkbox from '@mui/joy/Checkbox'
@@ -16,6 +16,7 @@ import Link from '@mui/joy/Link'
 import IconButton from '@mui/joy/IconButton'
 import Card from '@mui/joy/Card'
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
+import LaunchIcon from '@mui/icons-material/Launch';
 
 import StaticMap from '../../components/StaticMap';
 import { auth } from '../../firebase';

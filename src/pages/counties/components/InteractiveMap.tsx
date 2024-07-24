@@ -57,6 +57,7 @@ export const InteractiveMap: FC<InteractiveMapProps> = forwardRef((props, ref) =
       // console.log(prevCounties, counties);
 
       const deleted = prevCounties?.filter(prev => !counties.some(c => prev.id === c.id && prev.visits.length === c.visits.length))
+
       deleted?.forEach(c => {
         console.log(`deleting county ${c.id}`);
         mapRef.current?.removeFeatureState(getFeatureIdentifier(c.id))
@@ -66,12 +67,14 @@ export const InteractiveMap: FC<InteractiveMapProps> = forwardRef((props, ref) =
         const featState = mapRef.current?.getFeatureState(getFeatureIdentifier(c.id))
 
         if (featState?.count === c.visits.length) {
+
           // console.log(`county ${c.id} already rendered`);
           return
         }
         console.log(`county ${c.id} rendering`);
 
         const lived = c.visits.some(v => v.nature === 'lived')
+
         const firstVisit = c.visits.reduce((prev, curr) => prev.timestamp < curr.timestamp ? prev : curr)
         const nature = c.visits.map(v => v.nature).reduce((prev, curr) => {
           if (prev && curr && Object.keys(natureOptions).indexOf(prev) > Object.keys(natureOptions).indexOf(curr)) {

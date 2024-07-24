@@ -36,6 +36,7 @@ export const DetailPanel: FC<DetailPanelProps> = (props) => {
   const countyRef = doc(db, 'users', auth.currentUser!.uid, 'counties', focused.id.toString()).withConverter(countyConverter)
   const { data: county } = useFirestoreDocData(countyRef);
 
+
   const [titleHovered, setTitleHovered] = useState(false)
 
   return (
