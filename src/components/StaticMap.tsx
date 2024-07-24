@@ -80,7 +80,7 @@ const StaticMap: FC<StaticMapProps> = (props) => {
       getImgUrl([coords.longitude, coords.latitude])
     }
 
-  }, [coords, live])
+  }, [coords])
 
   const imgMask: CSSProperties = {
     maskImage: "radial-gradient(69.66% 50% at 49.97% 50%, #000 0%, rgba(0, 0, 0, 0.00) 100%)",
