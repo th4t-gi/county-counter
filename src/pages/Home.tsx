@@ -1,5 +1,5 @@
 import { FunctionComponent } from 'react';
-import StaticMap from "../components/StaticMap";
+import BackgroundMapImage from "../components/BackgroundMapImage";
 
 import NavBar from '../components/NavBar';
 import { useNavigate } from 'react-router-dom';
@@ -84,7 +84,7 @@ const Home: FunctionComponent<HomeProps> = (props) => {
         </Stack>
 
 
-        <StaticMap random mask style={{ zIndex: 0, height: "85vh" }} />
+        <BackgroundMapImage random mask style={{ zIndex: 0, height: "85vh" }} />
 
       </Box>
 

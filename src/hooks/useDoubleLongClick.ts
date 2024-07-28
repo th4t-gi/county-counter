@@ -123,7 +123,7 @@ const useDoubleLongClick = ({
         clickRef.off('boxzoomstart', handleMove)
       };
     }
-  }, [ref, onSingleClick, onDoubleClick, onLongClick]);
+  }, [ref?.current, onSingleClick, onDoubleClick, onLongClick]);
 
 };
 

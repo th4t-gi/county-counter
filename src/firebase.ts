@@ -63,6 +63,15 @@ export const visitConverter = {
   }
 }
 
+export const clearFirestoreCache = () => {
+  const map = (globalThis as Record<string, unknown>)['_reactFirePreloadedObservables'] as | Map<string, unknown> | undefined;
+  if (map) {
+    Array.from(map.keys())
+      .filter((key) => key.includes('firestore'))
+      .forEach((key) => map.delete(key))
+  }
+};
+
 // export const getCounties = async (db: Firestore, uid: string) => {
 //   const countiesRef = collection(db, 'users', uid, 'counties');
 

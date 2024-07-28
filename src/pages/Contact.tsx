@@ -12,7 +12,7 @@ import Input from '@mui/joy/Input';
 
 import { useForm } from "react-hook-form";
 import Textarea from '@mui/joy/Textarea';
-import StaticMap from '../components/StaticMap'
+import BackgroundMapImage from '../components/BackgroundMapImage'
 import { addDoc, collection } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Snackbar } from '@mui/joy';
@@ -112,14 +112,14 @@ const Contact: FC<ContactProps> = () => {
               </Stack>
 
               <FormField label="Subject" sx={{ flexGrow: 1 }} error={errors.subject}>
-                  <Input
-                    color='neutral'
-                    type='text'
-                    {...register("subject", {
-                      required: "Please enter in a subject"
-                    })}
-                  />
-                </FormField>
+                <Input
+                  color='neutral'
+                  type='text'
+                  {...register("subject", {
+                    required: "Please enter in a subject"
+                  })}
+                />
+              </FormField>
 
               <FormField label="Message" sx={{ flexGrow: 1 }} error={errors.message}>
                 <Textarea
@@ -167,16 +167,16 @@ const Contact: FC<ContactProps> = () => {
           </Card>
         </Stack>
 
-        <StaticMap random mask live style={{ zIndex: -1, position: 'absolute', top: 0 }} />
+        <BackgroundMapImage random mask live style={{ zIndex: -1, position: 'absolute', top: 0 }} />
 
       </form>
 
       <Snackbar
         open={snackbarOpen}
         onClose={() => setSnackbarOpen(false)}
-        anchorOrigin={{horizontal: 'center', vertical: 'bottom'}}
+        anchorOrigin={{ horizontal: 'center', vertical: 'bottom' }}
         size='lg'
-        endDecorator={<Close onClick={() => setSnackbarOpen(false)}/>}
+        endDecorator={<Close onClick={() => setSnackbarOpen(false)} />}
         variant='soft'
         color='success'
         autoHideDuration={3000}

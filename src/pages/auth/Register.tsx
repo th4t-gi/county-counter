@@ -11,7 +11,7 @@ import Typography from '@mui/joy/Typography'
 import Link from '@mui/joy/Link'
 import IconButton from '@mui/joy/IconButton'
 import Card from '@mui/joy/Card'
-import StaticMap from '../../components/StaticMap';
+import BackgroundMapImage from '../../components/BackgroundMapImage';
 
 import usCityData from '../../resources/uscities.json'
 
@@ -193,7 +193,7 @@ const Register: FC<RegisterProps> = () => {
         </form>
       </Card>
 
-      <StaticMap random mask live className='fixed left-0 top-0 -z-10 object-cover' />
+      <BackgroundMapImage random mask live className='fixed left-0 top-0 -z-10 object-cover' />
 
     </Box>
   )

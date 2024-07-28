@@ -14,13 +14,13 @@ interface Coords {
   long: number
 }
 
-interface BaseStaticMapProps {
+interface BaseBackgroundMapImageProps {
   mask?: boolean
   style?: CSSProperties
   className?: string
 }
 
-type StaticMapProps = BaseStaticMapProps &
+type BackgroundMapImageProps = BaseBackgroundMapImageProps &
   ({
     live: false
     random: false
@@ -32,7 +32,7 @@ type StaticMapProps = BaseStaticMapProps &
     live?: boolean
   })
 
-const StaticMap: FC<StaticMapProps> = (props) => {
+const BackgroundMapImage: FC<BackgroundMapImageProps> = (props) => {
   // const accessToken = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN
 
   const { defaultCoords, mask, live, random } = props
@@ -52,7 +52,7 @@ const StaticMap: FC<StaticMapProps> = (props) => {
     const points = featureCollection(imgCoords.map(c => point(c)));
     const nearest = nearestPoint(targetPoint, points);
 
-    console.log("Nearest", nearest);
+    // console.log("Nearest", nearest);
 
     const lat = nearest.geometry.coordinates[1]
     const long = nearest.geometry.coordinates[0]
@@ -107,4 +107,4 @@ const StaticMap: FC<StaticMapProps> = (props) => {
   )
 }
 
-export default StaticMap;
+export default BackgroundMapImage;

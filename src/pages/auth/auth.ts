@@ -1,6 +1,6 @@
 import { browserLocalPersistence, browserSessionPersistence, createUserWithEmailAndPassword, setPersistence, signInWithEmailAndPassword, signOut, updateProfile } from 'firebase/auth'
 import { doc, setDoc } from 'firebase/firestore'
-import { auth, db } from '../../firebase'
+import { auth, clearFirestoreCache, db } from '../../firebase'
 import { LoginPayload, Profile, ProfilePayload } from '../../types'
 
 
@@ -23,6 +23,7 @@ export const loginUser = async ({ email, password }: LoginPayload, remember: boo
 
 export const logoutUser = async () => {
   await signOut(auth)
+  clearFirestoreCache()
 }
 
 

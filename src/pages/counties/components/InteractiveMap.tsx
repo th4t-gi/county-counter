@@ -63,7 +63,7 @@ export const InteractiveMap: FC<InteractiveMapProps> = forwardRef((props, ref) =
         mapRef.current?.removeFeatureState(getFeatureIdentifier(c.id))
       })
 
-      counties.forEach(c => {
+      counties?.forEach(c => {
         const featState = mapRef.current?.getFeatureState(getFeatureIdentifier(c.id))
 
         if (featState?.count === c.visits.length) {

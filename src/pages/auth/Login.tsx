@@ -18,10 +18,11 @@ import Card from '@mui/joy/Card'
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import LaunchIcon from '@mui/icons-material/Launch';
 
-import StaticMap from '../../components/StaticMap';
+import BackgroundMapImage from '../../components/BackgroundMapImage';
 import { auth } from '../../firebase';
 import FormField from './components/FormField';
 import { loginUser } from './auth';
+import { useSigninCheck } from 'reactfire';
 
 type FormState = {
   email: string
@@ -36,16 +37,20 @@ const Login: FC<LoginProps> = () => {
   // const { error, profile } = useAppSelector(state => state.auth)
   // const dispatch = useAppDispatch()
 
+  const { data: signInResult } = useSigninCheck()
+
+
   const theme = useTheme()
   const isSmall = useMediaQuery(theme.breakpoints.down('sm'));
 
   const [remember, setRemember] = useState(false)
 
   useEffect(() => {
-    if (auth.currentUser) {
+    if (signInResult?.signedIn) {
+      console.log('were signed in!!!')
       navigate("/counties")
     }
-  }, [auth.currentUser, navigate])
+  }, [signInResult])
 
   const onSubmit = ({ email, password }: FormState) => {
 
@@ -140,7 +145,7 @@ const Login: FC<LoginProps> = () => {
         </form>
       </Card>
 
-      <StaticMap defaultCoords={{ lat: 39, long: -108 }} className='fixed left-0 top-0 -z-10 h-full w-full object-cover opacity-40' />
+      <BackgroundMapImage defaultCoords={{ lat: 39, long: -108 }} className='fixed left-0 top-0 -z-10 h-full w-full object-cover opacity-40' />
 
     </Box>
   )
